@@ -45,4 +45,24 @@ class UtilsTest extends FunSpec {
       assert(freeVariables(Abs(Var(id_x), Var(id_x))) == Set.empty)
     }
   }
+  describe("Alpha equivalence") {
+    it("Trivial terms") {
+      val id_x: Identifier = Identifier("x")
+      val id_y: Identifier = Identifier("y")
+      assert(isAlphaEquivalent(Var(id_x), Var(id_x)))
+      assert(isAlphaEquivalent(App(Var(id_x), Var(id_y)), App(Var(id_x), Var(id_y))))
+      assert(isAlphaEquivalent(Abs(Var(id_x), Var(id_x)), Abs(Var(id_x), Var(id_x))))
+    }
+    it("Free variables not alpha equivalet") {
+      val id_x: Identifier = Identifier("x")
+      val id_y: Identifier = Identifier("y")
+      assert(!isAlphaEquivalent(Var(id_x), Var(id_y)))
+      assert(!isAlphaEquivalent(App(Var(id_x), Var(id_x)), App(Var(id_y), Var(id_y))))
+    }
+    it("Alpha equivalence hold if alpha conversion is possible") {
+      val id_x0: Identifier = Identifier("x")
+      val id_x1: Identifier = Identifier("x")
+      assert(isAlphaEquivalent(Abs(Var(id_x0), Var(id_x0)), Abs(Var(id_x1), Var(id_x1))))
+    }
+  }
 }

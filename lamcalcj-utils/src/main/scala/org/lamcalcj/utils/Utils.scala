@@ -29,6 +29,19 @@ object Utils {
         freeVariables(term, bounded) ++ freeVariables(argument, bounded)
     }
 
+  def isAlphaEquivalent(term: Term, other: Term, bounds: Map[Identifier, Identifier] = Map.empty): Boolean =
+    term match {
+      case Var(identifier) =>
+        other.isInstanceOf[Var] && other.asInstanceOf[Var].identifier == bounds.get(identifier).getOrElse(identifier)
+      case Abs(variable, term) =>
+        other.isInstanceOf[Abs] &&
+        isAlphaEquivalent(term, other.asInstanceOf[Abs].term, bounds + (variable.identifier -> other.asInstanceOf[Abs].variable.identifier))
+      case App(term, argument) =>
+        other.isInstanceOf[App] &&
+          isAlphaEquivalent(term, other.asInstanceOf[App].term, bounds) &&
+          isAlphaEquivalent(argument, other.asInstanceOf[App].argument, bounds)
+    }
+
   private def findUnusedName(name: String, usedNames: Set[String]): String =
     Stream.from(0).map({ name + _ }).filterNot(usedNames.contains).head
 }

@@ -23,7 +23,7 @@ class UtilsTest extends FunSpec {
           }
         })
     }
-    it("Overlapping bound variable should be converted") {
+    it("Overlapping bounded variable should be converted") {
       val id_x0: Identifier = Identifier("x")
       val id_x1: Identifier = Identifier("x")
       assert(alphaConversion(Abs(Var(id_x0), Abs(Var(id_x1), Var(id_x1))))
@@ -34,6 +34,15 @@ class UtilsTest extends FunSpec {
       val id_x1: Identifier = Identifier("x")
       assert(alphaConversion(Abs(Var(id_x0), Var(id_x1)))
         .asInstanceOf[Abs].term.asInstanceOf[Var].identifier == id_x1)
+    }
+  }
+  describe("Free variables") {
+    it("Trivial terms") {
+      val id_x: Identifier = Identifier("x")
+      val id_y: Identifier = Identifier("y")
+      assert(freeVariables(Var(id_x)) == Set(id_x))
+      assert(freeVariables(App(Var(id_x), Var(id_y))) == Set(id_x, id_y))
+      assert(freeVariables(Abs(Var(id_x), Var(id_x))) == Set.empty)
     }
   }
 }

@@ -65,4 +65,19 @@ class UtilsTest extends FunSpec {
       assert(isAlphaEquivalent(Abs(Var(id_x0), Var(id_x0)), Abs(Var(id_x1), Var(id_x1))))
     }
   }
+  describe("Valid terms") {
+    it("Trivial terms") {
+      val id_x: Identifier = Identifier("x")
+      val id_y: Identifier = Identifier("y")
+      assert(isTermValid(Var(id_x)))
+      assert(isTermValid(App(Var(id_x), Var(id_y))))
+      assert(isTermValid(Abs(Var(id_x), Var(id_x))))
+    }
+    it("Invalid terms") {
+      val id_x: Identifier = Identifier("x")
+      assert(!isTermValid(Abs(Var(id_x), Abs(Var(id_x), Var(id_x)))))
+      assert(!isTermValid(App(Abs(Var(id_x), Var(id_x)), Abs(Var(id_x), Var(id_x)))))
+      assert(!isTermValid(App(Abs(Var(id_x), Var(id_x)), Var(id_x))))
+    }
+  }
 }

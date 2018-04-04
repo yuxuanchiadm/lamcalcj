@@ -5,39 +5,40 @@ import java.io.PushbackReader
 import scala.collection.mutable.ListBuffer
 
 import org.lamcalcj.parser.lexical.Kind._
+import org.lamcalcj.parser.lexical.TokenList._
 
 object Tokenizer {
-  def tokenize(reader: Reader): Either[(Location, String), List[Token]] = {
+  def tokenize(reader: Reader): Either[(Location, String), TokenList] = {
     val tokenizer: Tokenizer = new Tokenizer(new CodePointReader(reader))
     import tokenizer._;
 
-    val tokens: ListBuffer[Token] = new ListBuffer
-    var state: Int = 0
+    val builder: TokenListBuilder = new TokenListBuilder
 
+    var state: Int = 0
     while (true) state match {
       case 0 => {
         beginToken()
         val cp: Int = next()
         if (cp == -1) {
-          tokens += endToken(EOF)
+          builder += endToken(EOF)
           state = -1
         } else if (cp == ' ' | cp == '\r' | cp == '\n' | cp == '\t') {
           state = 1
         } else if (cp == 'λ') {
-          tokens += endToken(Abstract)
+          builder += endToken(Abstract)
           state = 0
         } else if (cp == '.') {
-          tokens += endToken(Delimiter)
+          builder += endToken(Delimiter)
           state = 0
         } else if (Character.isLetter(cp) || Character.isDigit(cp)
           || Character.getType(cp) == Character.MATH_SYMBOL || Character.getType(cp) == Character.OTHER_SYMBOL
           || cp == '$' || cp == '_') {
           state = 2
         } else if (cp == '(') {
-          tokens += endToken(Begin)
+          builder += endToken(Begin)
           state = 0
         } else if (cp == ')') {
-          tokens += endToken(End)
+          builder += endToken(End)
           state = 0
         } else {
           state = -2
@@ -49,7 +50,7 @@ object Tokenizer {
           next()
           state = 1
         } else {
-          tokens += endToken(Space)
+          builder += endToken(Space)
           state = 0
         }
       }
@@ -61,12 +62,12 @@ object Tokenizer {
           next()
           state = 2
         } else {
-          tokens += endToken(Identifier)
+          builder += endToken(Identifier)
           state = 0
         }
       }
       case -1 =>
-        return Right(tokens.result())
+        return Right(builder.result())
       case -2 =>
         return Left(errorToken())
     }

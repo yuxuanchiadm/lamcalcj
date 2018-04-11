@@ -1,7 +1,8 @@
 package org.lamcalcj.parser.lexical
 
-import org.scalatest.FunSpec
 import java.io.StringReader
+
+import org.scalatest.FunSpec
 
 class TokenizerTest extends FunSpec {
   describe("Basic terms") {

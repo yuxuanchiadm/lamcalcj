@@ -2,10 +2,12 @@ package org.lamcalcj.parser.lexical
 
 import java.io.Reader
 import java.io.PushbackReader
-import scala.collection.mutable.ListBuffer
 
 import org.lamcalcj.parser.lexical.Kind._
 import org.lamcalcj.parser.lexical.TokenList._
+
+import scala.collection.mutable.ListBuffer
+
 
 object Tokenizer {
   def tokenize(reader: Reader): Either[(Location, String), TokenList] = {

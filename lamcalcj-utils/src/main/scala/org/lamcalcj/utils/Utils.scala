@@ -29,6 +29,13 @@ object Utils {
         freeVariables(term, bounds) ++ freeVariables(argument, bounds)
     }
 
+  def hasFreeOccurrence(term: Term, id: Identifier): Boolean =
+    term match {
+      case Var(identifier) => identifier == id;
+      case Abs(variable, term) => hasFreeOccurrence(term, id)
+      case App(term, argument) => hasFreeOccurrence(term, id) || hasFreeOccurrence(argument, id)
+    }
+
   def isAlphaEquivalent(term: Term, other: Term, bounds: Map[Identifier, Identifier] = Map.empty): Boolean =
     term match {
       case Var(identifier) =>
@@ -44,6 +51,18 @@ object Utils {
 
   def isTermValid(term: Term): Boolean =
     boundedVariables(term).map(isTermProperlyBounded(term, _)).getOrElse(false)
+
+  def cloneTerm(term: Term, mapping: Map[Identifier, Identifier] = Map.empty): Term =
+    term match {
+      case Var(identifier) =>
+        mapping.get(identifier).map(Var).getOrElse(term)
+      case Abs(variable, term) => {
+        val identifier: Identifier = Identifier(variable.identifier.name)
+        Abs(Var(identifier), cloneTerm(term, mapping + (variable.identifier -> identifier)))
+      }
+      case App(term, argument) =>
+        App(cloneTerm(term, mapping), cloneTerm(argument, mapping))
+    }
 
   private def findUnusedName(name: String, usedNames: Set[String]): String =
     Stream.from(0).map({ name + _ }).filterNot(usedNames.contains).head

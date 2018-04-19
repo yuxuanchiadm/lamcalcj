@@ -8,8 +8,10 @@ import org.lamcalcj.parser.lexical.TokenList._
 import java.nio.CharBuffer
 import java.util.Arrays
 
+import scala.collection._
+
 object Tokenizer {
-  def tokenize(reader: Reader, tokenizerBehavior: TokenizerBehavior = TokenizerBehavior()): Either[(Location, String), TokenList] = {
+  def tokenize(reader: Reader, tokenizerBehavior: TokenizerBehavior = new TokenizerBehavior()): Either[(Location, String), TokenList] = {
     val tokenize: Tokenizer = new Tokenizer(reader, tokenizerBehavior)
     val builder: TokenListBuilder = new TokenListBuilder
 
@@ -26,7 +28,6 @@ object Tokenizer {
   }
 
   private class Tokenizer(reader: Reader, tokenizerBehavior: TokenizerBehavior) {
-    import scala.collection._
     import NewlineState._
 
     var pushbackBuffer: CharBuffer = CharBuffer.allocate(256)
@@ -37,8 +38,8 @@ object Tokenizer {
     var beginLine: Int = 0
     var beginColumn: Int = 0
     val image: StringBuilder = new StringBuilder
-    val kindMatcherMap: Map[Kind, TokenMatcher] = tokenizerBehavior.asMap()
-    val kindStateMap: mutable.Map[Kind, Int] = mutable.Map.empty
+    val matchers: immutable.ListMap[Kind, TokenMatcher] = tokenizerBehavior.asListMap()
+    val stateMap: mutable.Map[Kind, Int] = mutable.Map.empty
     var matchedTokenInfo: Option[(NewlineState, Int, Int, Int, Kind)] = Option.empty
 
     pushbackBuffer.flip()
@@ -93,7 +94,7 @@ object Tokenizer {
     def beginToken(): Unit = {
       beginLine = currentLine
       beginColumn = currentColumn
-      kindStateMap ++= kindMatcherMap.mapValues(_.initialState)
+      stateMap ++= matchers.mapValues(_.initialState)
       findMatchedToken()
     }
 
@@ -115,7 +116,7 @@ object Tokenizer {
         currentColumn = column
         val tokenImage: String = image.substring(0, imageLength)
         image.clear()
-        kindStateMap.clear()
+        stateMap.clear()
         matchedTokenInfo = Option.empty
         Token(kind, Location(beginLine, beginColumn, currentLine, currentColumn), tokenImage)
     }
@@ -125,20 +126,24 @@ object Tokenizer {
 
     def advanceState(): Unit = {
       val cp: Int = next()
-      kindStateMap transform { (kind, state) =>
-        val terminateState: Int = kindMatcherMap(kind).terminateState
-        if (state == terminateState) terminateState else kindMatcherMap(kind).nextState(state, cp)
+      stateMap transform { (kind, state) =>
+        val terminateState: Int = matchers(kind).terminateState
+        if (state == terminateState) terminateState else matchers(kind).nextState(state, cp)
       }
       findMatchedToken()
     }
 
-    def isTerminateState(): Boolean = kindStateMap forall {
-      case (kind, state) => state == kindMatcherMap(kind).terminateState
+    def isTerminateState(): Boolean = stateMap forall {
+      case (kind, state) => state == matchers(kind).terminateState
     }
 
     def findMatchedToken(): Unit = {
-      for (kind <- kindList.filter(kind => kindMatcherMap(kind).finalStates contains kindStateMap(kind)).headOption)
-        matchedTokenInfo = Option((newlineState, currentLine, currentColumn, image.length, kind))
+      (for {
+        (kind, matcher) <- matchers
+        if matcher.finalStates contains stateMap(kind)
+      } yield kind)
+        .headOption
+        .foreach(kind => matchedTokenInfo = Option((newlineState, currentLine, currentColumn, image.length, kind)))
     }
   }
 

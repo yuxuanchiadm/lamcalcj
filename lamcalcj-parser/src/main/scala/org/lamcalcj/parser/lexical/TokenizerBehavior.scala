@@ -1,8 +1,9 @@
 package org.lamcalcj.parser.lexical
 
 import org.lamcalcj.parser.lexical.Kind._
+import scala.collection.immutable.ListMap
 
-case class TokenizerBehavior(
+class TokenizerBehavior(
   tokenEOFMatcher: TokenMatcher = new CodePointTokenMatcher(-1),
   tokenSpaceMatcher: TokenMatcher = new RepeatConditionTokenMatcher(cp => cp == ' ' | cp == '\r' | cp == '\n' | cp == '\t'),
   tokenAbstractMatcher: TokenMatcher = new CodePointTokenMatcher('λ'),
@@ -11,7 +12,8 @@ case class TokenizerBehavior(
     Character.getType(cp) == Character.MATH_SYMBOL || Character.getType(cp) == Character.OTHER_SYMBOL || cp == '$' || cp == '_')),
   tokenBeginMatcher: TokenMatcher = new CodePointTokenMatcher('('),
   tokenEndMatcher: TokenMatcher = new CodePointTokenMatcher(')')) {
-  def asMap(): Map[Kind, TokenMatcher] = Map(
+
+  def asListMap(): ListMap[Kind, TokenMatcher] = ListMap(
     EOF -> tokenEOFMatcher,
     Space -> tokenSpaceMatcher,
     Abstract -> tokenAbstractMatcher,

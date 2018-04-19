@@ -16,7 +16,7 @@ import scala.collection.mutable.Queue
 object Parser {
   def parse(
     reader: Reader,
-    tokenizerBehavior: TokenizerBehavior = TokenizerBehavior(),
+    tokenizerBehavior: TokenizerBehavior = new TokenizerBehavior(),
     bounds: Map[String, Identifier] = Map.empty): Either[String, (Map[String, Identifier], Term)] = for {
     tokenList <- Tokenizer.tokenize(reader, tokenizerBehavior).left.map({
       case (loaction, image) => "Lexical error of token from [line " + loaction.beginLine + ", column " + loaction.beginColumn +

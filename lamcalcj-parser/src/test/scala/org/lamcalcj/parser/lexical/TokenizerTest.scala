@@ -2,6 +2,8 @@ package org.lamcalcj.parser.lexical
 
 import java.io.StringReader
 
+import org.lamcalcj.parser.lexical.Kind._
+import org.lamcalcj.parser.lexical.TokenList._
 import org.scalatest.FunSpec
 
 class TokenizerTest extends FunSpec {
@@ -15,6 +17,13 @@ class TokenizerTest extends FunSpec {
     }
     it("Should reject illegal input") {
       assert(Tokenizer.tokenize(new StringReader("#")).isLeft)
+    }
+  }
+  describe("Tokenizer behavior") {
+    it("Should greedy match") {
+      assertResult(List(Abstract, Identifier, Delimiter, Identifier, EOF))(Tokenizer.tokenize(
+        new StringReader("lambda lambda_x. lambda_x"),
+        TokenizerBehavior(tokenAbstractMatcher = new StringTokenMatcher("lambda"))).right.get.toList().map(_.kind))
     }
   }
 }

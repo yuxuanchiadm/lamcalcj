@@ -1,149 +1,150 @@
 package org.lamcalcj.parser.lexical
 
 import java.io.Reader
-import java.io.PushbackReader
 
 import org.lamcalcj.parser.lexical.Kind._
 import org.lamcalcj.parser.lexical.TokenList._
 
-import scala.collection.mutable.ListBuffer
-
+import java.nio.CharBuffer
+import java.util.Arrays
 
 object Tokenizer {
-  def tokenize(reader: Reader): Either[(Location, String), TokenList] = {
-    val tokenizer: Tokenizer = new Tokenizer(new CodePointReader(reader))
-    import tokenizer._;
-
+  def tokenize(reader: Reader, tokenizerBehavior: TokenizerBehavior = TokenizerBehavior()): Either[(Location, String), TokenList] = {
+    val tokenize: Tokenizer = new Tokenizer(reader, tokenizerBehavior)
     val builder: TokenListBuilder = new TokenListBuilder
 
-    var state: Int = 0
-    while (true) state match {
-      case 0 => {
-        beginToken()
-        val cp: Int = next()
-        if (cp == -1) {
-          builder += endToken(EOF)
-          state = -1
-        } else if (cp == ' ' | cp == '\r' | cp == '\n' | cp == '\t') {
-          state = 1
-        } else if (cp == 'λ') {
-          builder += endToken(Abstract)
-          state = 0
-        } else if (cp == '.') {
-          builder += endToken(Delimiter)
-          state = 0
-        } else if (Character.isLetter(cp) || Character.isDigit(cp)
-          || Character.getType(cp) == Character.MATH_SYMBOL || Character.getType(cp) == Character.OTHER_SYMBOL
-          || cp == '$' || cp == '_') {
-          state = 2
-        } else if (cp == '(') {
-          builder += endToken(Begin)
-          state = 0
-        } else if (cp == ')') {
-          builder += endToken(End)
-          state = 0
-        } else {
-          state = -2
-        }
-      }
-      case 1 => {
-        val cp: Int = peek()
-        if (cp == ' ' | cp == '\r' | cp == '\n' | cp == '\t') {
-          next()
-          state = 1
-        } else {
-          builder += endToken(Space)
-          state = 0
-        }
-      }
-      case 2 => {
-        val cp: Int = peek()
-        if (Character.isLetter(cp) || Character.isDigit(cp)
-          || Character.getType(cp) == Character.MATH_SYMBOL || Character.getType(cp) == Character.OTHER_SYMBOL
-          || cp == '$' || cp == '_') {
-          next()
-          state = 2
-        } else {
-          builder += endToken(Identifier)
-          state = 0
-        }
-      }
-      case -1 =>
-        return Right(builder.result())
-      case -2 =>
-        return Left(errorToken())
-    }
-    throw new IllegalStateException
+    var token: Token = null
+    do {
+      tokenize.beginToken()
+      while (!tokenize.isTerminateState())
+        tokenize.advanceState()
+      token = tokenize.endToken().getOrElse(return Left(tokenize.errorToken()))
+      builder += token
+    } while (token.kind != EOF)
+
+    return Right(builder.result())
   }
 
-  private class Tokenizer(reader: CodePointReader) {
-    private var eof: Boolean = false
-    private var currentLine: Int = 0
-    private var currentColumn: Int = 0
-    private var beginLine: Int = 0
-    private var beginColumn: Int = 0
-    private val image: StringBuilder = new StringBuilder
+  private class Tokenizer(reader: Reader, tokenizerBehavior: TokenizerBehavior) {
+    import scala.collection._
+    import NewlineState._
+
+    var pushbackBuffer: CharBuffer = CharBuffer.allocate(256)
+    val cpReader: CodePointReader = new CodePointReader(reader)
+    var newlineState: NewlineState = None
+    var currentLine: Int = 0
+    var currentColumn: Int = 0
+    var beginLine: Int = 0
+    var beginColumn: Int = 0
+    val image: StringBuilder = new StringBuilder
+    val kindMatcherMap: Map[Kind, TokenMatcher] = tokenizerBehavior.asMap()
+    val kindStateMap: mutable.Map[Kind, Int] = mutable.Map.empty
+    var matchedTokenInfo: Option[(NewlineState, Int, Int, Int, Kind)] = Option.empty
+
+    pushbackBuffer.flip()
+
+    def read(): Int = {
+      if (pushbackBuffer.hasRemaining()) {
+        val c1: Char = pushbackBuffer.get()
+        if (Character.isHighSurrogate(c1) && pushbackBuffer.hasRemaining()) {
+          val c2: Char = pushbackBuffer.get()
+          if (Character.isLowSurrogate(c2))
+            return Character.toCodePoint(c1, c2)
+          else
+            pushbackBuffer.position(pushbackBuffer.position() - 1)
+        }
+        return c1
+      } else {
+        pushbackBuffer.limit(0)
+        return cpReader.read()
+      }
+    }
+
+    def next(): Int = {
+      val cp: Int = read()
+      newlineState match {
+        case CR => if (cp != '\n') {
+          currentLine += 1
+          currentColumn = 0
+        }
+        case LF => {
+          currentLine += 1
+          currentColumn = 0
+        }
+        case None => {}
+      }
+      if (cp >= 0) {
+        if (Character.isBmpCodePoint(cp))
+          image += cp.asInstanceOf[Char]
+        else {
+          image += Character.highSurrogate(cp)
+          image += Character.lowSurrogate(cp)
+        }
+        currentColumn += 1
+        cp match {
+          case '\r' => newlineState = CR
+          case '\n' => newlineState = LF
+          case _ => newlineState = None
+        }
+      }
+      return cp
+    }
 
     def beginToken(): Unit = {
       beginLine = currentLine
       beginColumn = currentColumn
-      image.clear()
+      kindStateMap ++= kindMatcherMap.mapValues(_.initialState)
+      findMatchedToken()
     }
 
-    def endToken(kind: Kind): Token =
-      Token(kind, Location(beginLine, beginColumn, currentLine, currentColumn), image.toString())
+    def endToken(): Option[Token] = matchedTokenInfo.map {
+      case (originNewlineState, line, column, imageLength, kind) =>
+        if (pushbackBuffer.limit() == 0) {
+          pushbackBuffer.clear()
+          val remainingImage: String = image.substring(imageLength)
+          if (remainingImage.length() > pushbackBuffer.remaining())
+            pushbackBuffer = CharBuffer.allocate((for { bit <- (0 until 32) } yield (1 << bit) >>> 1)
+              .find(_ >= remainingImage.length())
+              .getOrElse(Int.MaxValue))
+          pushbackBuffer.put(remainingImage)
+          pushbackBuffer.flip()
+        } else
+          pushbackBuffer.position(pushbackBuffer.position() - image.length() + imageLength)
+        newlineState = originNewlineState
+        currentLine = line
+        currentColumn = column
+        val tokenImage: String = image.substring(0, imageLength)
+        image.clear()
+        kindStateMap.clear()
+        matchedTokenInfo = Option.empty
+        Token(kind, Location(beginLine, beginColumn, currentLine, currentColumn), tokenImage)
+    }
 
     def errorToken(): (Location, String) =
-      (Location(beginLine, beginColumn, currentLine, currentColumn), image.toString())
+      (Location(beginLine, beginColumn, currentLine, currentColumn), image.result())
 
-    def next(): Int = {
-      if (eof)
-        return -1
-      val cp: Int = reader.read()
-      if (cp >= 0)
-        image ++= String.valueOf(Character.toChars(cp))
-      if (cp == '\n' || (cp == '\r' && peek() != '\n')) {
-        currentLine += 1
-        currentColumn = 0
-      } else if (cp >= 0) {
-        currentColumn += 1
-      } else {
-        eof = true
+    def advanceState(): Unit = {
+      val cp: Int = next()
+      kindStateMap transform { (kind, state) =>
+        val terminateState: Int = kindMatcherMap(kind).terminateState
+        if (state == terminateState) terminateState else kindMatcherMap(kind).nextState(state, cp)
       }
-      return cp
+      findMatchedToken()
     }
 
-    def peek(): Int = {
-      val cp: Int = reader.read()
-      if (cp >= 0)
-        reader.unread(cp)
-      return cp
+    def isTerminateState(): Boolean = kindStateMap forall {
+      case (kind, state) => state == kindMatcherMap(kind).terminateState
+    }
+
+    def findMatchedToken(): Unit = {
+      for (kind <- kindList.filter(kind => kindMatcherMap(kind).finalStates contains kindStateMap(kind)).headOption)
+        matchedTokenInfo = Option((newlineState, currentLine, currentColumn, image.length, kind))
     }
   }
 
-  private class CodePointReader(originReader: Reader) {
-    private val reader: PushbackReader = new PushbackReader(originReader, 2)
+  object NewlineState extends Enumeration {
+    type NewlineState = Value
 
-    def unread(cp: Int): Unit = {
-      reader.unread(Character.toChars(cp))
-    }
-
-    def read(): Int = {
-      val i1: Int = reader.read()
-      if (i1 < 0)
-        return i1
-      val c1: Char = i1.asInstanceOf[Char]
-      if (Character.isHighSurrogate(c1)) {
-        val i2: Int = reader.read()
-        if (i2 >= 0) {
-          val c2: Char = i2.asInstanceOf[Char]
-          if (Character.isLowSurrogate(c2))
-            return Character.toCodePoint(c1, c2)
-          else
-            reader.unread(i2)
-        }
-      }
-      return c1
-    }
+    val None, CR, LF = Value
   }
 }

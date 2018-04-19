@@ -14,20 +14,25 @@ import scala.util.Either
 import scala.collection.mutable.Queue
 
 object Parser {
-  def parse(reader: Reader): Either[String, (Map[String, Identifier], Term)] = for {
-    tokenList <- Tokenizer.tokenize(reader).left.map({
+  def parse(
+    reader: Reader,
+    tokenizerBehavior: TokenizerBehavior = TokenizerBehavior(),
+    bounds: Map[String, Identifier] = Map.empty): Either[String, (Map[String, Identifier], Term)] = for {
+    tokenList <- Tokenizer.tokenize(reader, tokenizerBehavior).left.map({
       case (loaction, image) => "Lexical error of token from [line " + loaction.beginLine + ", column " + loaction.beginColumn +
         "] at [line " + loaction.beginLine + ", column " + loaction.beginColumn + "]. Token image: " + image
     })
-    result <- parse(tokenList).left.map({
+    result <- parseTokenList(tokenList, bounds).left.map({
       case (expectedKinds, nextTokenList) => "Syntax error " + nextTokenList.tokenMessage +
         ". Expected kinds: " + ("" /: expectedKinds)((msg, kind) => msg + (if (msg.isEmpty) kind else ", " + kind))
     })
   } yield result
 
-  def parse(tokenList: TokenList): Either[(List[Kind], TokenList), (Map[String, Identifier], Term)] = {
+  def parseTokenList(
+    tokenList: TokenList,
+    bounds: Map[String, Identifier] = Map.empty): Either[(List[Kind], TokenList), (Map[String, Identifier], Term)] = {
     val parser: Parser = new Parser(tokenList)
-    return parser.parseLambda(Map.empty).map((parser.freeVariables, _))
+    return parser.parseLambda(bounds).map((parser.freeVariables, _))
   }
 
   private class Parser(inputTokenList: TokenList) {

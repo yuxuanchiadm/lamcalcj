@@ -23,7 +23,10 @@ class TokenizerTest extends FunSpec {
     it("Should greedy match") {
       assertResult(List(Abstract, Identifier, Delimiter, Identifier, EOF))(Tokenizer.tokenize(
         new StringReader("lambda lambda_x. lambda_x"),
-        new TokenizerBehavior(tokenAbstractMatcher = new StringTokenMatcher("lambda"))).right.get.toList().map(_.kind))
+        new TokenizerBehavior(for {
+          (kind, matcher) <- TokenizerBehavior.defaultMatchers
+        } yield (kind -> (if (kind == Abstract) new StringTokenMatcher("lambda") else matcher))))
+        .right.get.toList().map(_.kind))
     }
   }
 }

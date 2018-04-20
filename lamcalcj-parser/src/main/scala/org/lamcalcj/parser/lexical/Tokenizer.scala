@@ -38,7 +38,7 @@ object Tokenizer {
     var beginLine: Int = 0
     var beginColumn: Int = 0
     val image: StringBuilder = new StringBuilder
-    val matchers: immutable.ListMap[Kind, TokenMatcher] = tokenizerBehavior.asListMap()
+    val matchers: immutable.ListMap[Kind, TokenMatcher] = tokenizerBehavior.matchers
     val stateMap: mutable.Map[Kind, Int] = mutable.Map.empty
     var matchedTokenInfo: Option[(NewlineState, Int, Int, Int, Kind)] = Option.empty
 

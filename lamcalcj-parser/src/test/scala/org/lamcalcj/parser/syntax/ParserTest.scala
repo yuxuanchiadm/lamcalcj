@@ -8,16 +8,16 @@ import org.lamcalcj.parser.lexical.Tokenizer
 class ParserTest extends FunSpec {
   describe("Basic terms") {
     it("Should successfully parse") {
-      assert(Parser.parseTokenList(Tokenizer.tokenize(new StringReader("x")).right.get).isRight)
-      assert(Parser.parseTokenList(Tokenizer.tokenize(new StringReader("λx. x")).right.get).isRight)
-      assert(Parser.parseTokenList(Tokenizer.tokenize(new StringReader("(x x)")).right.get).isRight)
-      assert(Parser.parseTokenList(Tokenizer.tokenize(new StringReader("0")).right.get).isRight)
-      assert(Parser.parseTokenList(Tokenizer.tokenize(new StringReader("λg.(λx.g (x x)) (λx.g (x x))")).right.get).isRight)
+      assert(Parser.parseTokenList(new TokenStream(Tokenizer.tokenize(new StringReader("x")).right.get)).isRight)
+      assert(Parser.parseTokenList(new TokenStream(Tokenizer.tokenize(new StringReader("λx. x")).right.get)).isRight)
+      assert(Parser.parseTokenList(new TokenStream(Tokenizer.tokenize(new StringReader("(x x)")).right.get)).isRight)
+      assert(Parser.parseTokenList(new TokenStream(Tokenizer.tokenize(new StringReader("0")).right.get)).isRight)
+      assert(Parser.parseTokenList(new TokenStream(Tokenizer.tokenize(new StringReader("λg.(λx.g (x x)) (λx.g (x x))")).right.get)).isRight)
     }
     it("Should reject illegal input") {
-      assert(Parser.parseTokenList(Tokenizer.tokenize(new StringReader("")).right.get).isLeft)
-      assert(Parser.parseTokenList(Tokenizer.tokenize(new StringReader("()")).right.get).isLeft)
-      assert(Parser.parseTokenList(Tokenizer.tokenize(new StringReader("λ.x")).right.get).isLeft)
+      assert(Parser.parseTokenList(new TokenStream(Tokenizer.tokenize(new StringReader("")).right.get)).isLeft)
+      assert(Parser.parseTokenList(new TokenStream(Tokenizer.tokenize(new StringReader("()")).right.get)).isLeft)
+      assert(Parser.parseTokenList(new TokenStream(Tokenizer.tokenize(new StringReader("λ.x")).right.get)).isLeft)
     }
   }
 }

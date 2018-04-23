@@ -44,12 +44,12 @@ object PrettyPrint {
             val builder: StringBuilder = new StringBuilder()
             builder ++= symbols.symbolAbstractionBegin
             builder ++= symbols.symbolArgumentsBegin
-            builder ++= printLambda(variable, false)
+            builder ++= variable.identifier.name
             var current: Term = term
             do {} while (current match {
               case Abs(variable, term) => {
                 builder ++= symbols.symbolArgumentsSeparator
-                builder ++= printLambda(variable, false)
+                builder ++= variable.identifier.name
                 current = term
                 true
               }
@@ -60,7 +60,7 @@ object PrettyPrint {
             builder ++= printLambda(current, true)
             builder ++= symbols.symbolAbstractionEnd
             builder.toString
-          } else symbols.symbolAbstractionBegin + symbols.symbolArgumentsBegin + printLambda(variable, false) + symbols.symbolArgumentsEnd +
+          } else symbols.symbolAbstractionBegin + symbols.symbolArgumentsBegin + variable.identifier.name + symbols.symbolArgumentsEnd +
             symbols.symbolAbstractionSeparator + printLambda(term, true) + symbols.symbolAbstractionEnd
         }
         case App(term, argument) => {

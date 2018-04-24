@@ -14,12 +14,18 @@ object EtaConverter {
     var step: Int = 0
     var aborted: Boolean = false
 
-    def convert(term: Term): Term = if (step >= maxStep) { aborted = true; term } else
-      term match {
+    def convert(inputTerm: Term): Term = if (aborted) inputTerm else
+      inputTerm match {
         case Var(identifier) => Var(identifier)
         case Abs(variable, App(term, Var(identifier))) =>
           if (variable.identifier == identifier && !Utils.hasFreeOccurrence(term, identifier))
-            term
+            if (step >= maxStep) {
+              aborted = true
+              inputTerm
+            } else {
+              step += 1
+              term
+            }
           else
             Abs(variable, App(if (evaluationOnly) term else convert(term), Var(identifier)))
         case Abs(variable, term) => Abs(variable, if (evaluationOnly) term else convert(term))

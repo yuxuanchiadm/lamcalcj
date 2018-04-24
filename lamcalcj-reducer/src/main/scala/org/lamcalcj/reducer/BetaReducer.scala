@@ -2,6 +2,7 @@ package org.lamcalcj.reducer
 
 import org.lamcalcj.ast.Lambda._
 import org.lamcalcj.utils.Utils
+import scala.collection.mutable.ArrayStack
 
 object BetaReducer {
   def betaReduction(term: Term, maxStep: Int = 0xFF, headOnly: Boolean = false, evaluationOnly: Boolean = false): (Boolean, Term) = {
@@ -14,18 +15,57 @@ object BetaReducer {
     var step: Int = 0
     var aborted: Boolean = false
 
-    def reduce(term: Term): Term = if (step >= maxStep) { aborted = true; term } else
-      term match {
-        case Var(identifier) => Var(identifier)
-        case Abs(variable, term) =>
-          Abs(variable, if (evaluationOnly) term else reduce(term))
-        case App(Var(identity), argumnet) => App(Var(identity), if (headOnly) argumnet else reduce(argumnet))
-        case App(Abs(variable, term), argument) => { step += 1; reduce(substitute(term, variable.identifier, argument)) }
-        case App(term, argument) => reduce(term) match {
-          case Abs(variable, term) => reduce(App(Abs(variable, term), argument))
-          case term => App(term, if (headOnly) argument else reduce(argument))
-        }
+    def reduce(inputTerm: Term): Term = {
+      if (aborted)
+        return inputTerm
+      var currentTerm: Term = inputTerm
+
+      val variableStack: ArrayStack[Var] = new ArrayStack
+      val argumentStack: ArrayStack[Term] = new ArrayStack
+      do {
+        if (!evaluationOnly) do {} while (currentTerm match {
+          case Abs(variable, term) => {
+            variableStack.push(variable)
+            currentTerm = term
+            true
+          }
+          case _ => false
+        })
+        do {} while (currentTerm match {
+          case App(term, argument) => {
+            argumentStack.push(argument)
+            currentTerm = term
+            true
+          }
+          case _ => false
+        })
+        do {} while (!aborted && argumentStack.nonEmpty && (currentTerm match {
+          case Abs(variable, term) => {
+            if (step >= maxStep)
+              aborted = true
+            else {
+              step += 1
+              currentTerm = substitute(term, variable.identifier, argumentStack.pop())
+            }
+            true
+          }
+          case _ => false
+        }))
+      } while (!aborted && (currentTerm match {
+        case Var(_) => false
+        case Abs(_, _) => argumentStack.isEmpty
+        case App(_, _) => true
+      }))
+      while (argumentStack.nonEmpty) {
+        val argument: Term = argumentStack.pop()
+        currentTerm = App(currentTerm, if (!headOnly) reduce(argument) else argument)
       }
+      while (variableStack.nonEmpty) {
+        val variable: Var = variableStack.pop()
+        currentTerm = Abs(variable, currentTerm)
+      }
+      return currentTerm
+    }
 
     def substitute(e: Term, id: Identifier, r: Term): Term = e match {
       case Var(identifier) => if (identifier == id) Utils.cloneTerm(r) else Var(identifier)

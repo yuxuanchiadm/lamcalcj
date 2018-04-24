@@ -24,6 +24,11 @@ class BetaReducerTest extends FunSpec {
     it("Should have different bounded variable") {
       assert(Utils.isTermValid(BetaReducer.betaReduction(Parser.parse(new StringReader("(λx.x x) (0 (λy.y))")).right.get._2)._2))
     }
+    it("Ensure normal order reduce") {
+      assert(BetaReducer.betaReduction(Parser.parse(new StringReader("(λx.0) ((λu.u u) (λu.u u))")).right.get._2)._1)
+      assert(BetaReducer.betaReduction(Parser.parse(new StringReader("(λx.λy.y ((λu.u u) (λu.u u))) 0 (λu.0)")).right.get._2)._1)
+      assert(BetaReducer.betaReduction(Parser.parse(new StringReader("(λx.(λy.λz.0) 0) 0 ((λu.u u) (λu.u u))")).right.get._2)._1)
+    }
   }
   describe("Church number") {
     it("Should successfully beta reduce") {

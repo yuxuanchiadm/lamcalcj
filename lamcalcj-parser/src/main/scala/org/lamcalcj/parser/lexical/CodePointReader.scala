@@ -14,7 +14,7 @@ class CodePointReader(reader: Reader) {
   }
 
   private def unreadChar(c: Int): Unit = {
-    if (c >= 0)
+    if (this.c >= 0)
       throw new IllegalStateException
     this.c = c
   }

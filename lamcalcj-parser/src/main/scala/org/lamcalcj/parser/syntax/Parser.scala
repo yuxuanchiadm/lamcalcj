@@ -6,9 +6,9 @@ import org.lamcalcj.ast.Lambda._
 import org.lamcalcj.parser.lexical._
 import org.lamcalcj.parser.lexical.Kind._
 import org.lamcalcj.parser.lexical.TokenList._
-import org.monadscala.Either._
 import org.monadscala.Typelevel._
-import org.monadscala._
+import org.monadscala.instance.Either._
+import org.monadscala.typeclass._
 
 import scala.util.Either
 import scala.collection.mutable.Queue
@@ -24,7 +24,7 @@ object Parser {
     })
     result <- parseTokenList(new TokenStream(tokenList), bounds).left.map({
       case (expectedKinds, nextTokenList) => "Syntax error " + nextTokenList.tokenMessage +
-        ". Expected kinds: " + ("" /: expectedKinds)((msg, kind) => msg + (if (msg.isEmpty) kind else ", " + kind))
+        ". Expected kinds: " + expectedKinds.foldLeft("")((msg, kind) => msg + (if (msg.isEmpty) kind else ", " + kind))
     })
   } yield result
 
@@ -36,7 +36,7 @@ object Parser {
   }
 
   private class Parser(tokenStream: TokenStream) {
-    val monad: Monad[Currying[Either, String]#Type] = Monad[Currying[Either, String]#Type]
+    val monad: Monad[Curry2[Either]# <[String]# <|] = Monad[Curry2[Either]# <[String]# <|]
     import monad._
 
     var freeVariables: Map[String, Identifier] = Map.empty

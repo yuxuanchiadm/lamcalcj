@@ -29,12 +29,12 @@ class TokenListBuilder {
   }
 
   def result(): TokenList =
-    (TokenList.empty /: tokenList) {
+    tokenList.foldLeft(TokenList.empty) {
       case (next, (special, token)) => Entry(buildSpecial(special), token, next)
     }
 
   private def buildSpecial(specialList: List[Token]): TokenList =
-    (TokenList.empty /: specialList) {
+    specialList.foldLeft(TokenList.empty) {
       (next, token) => Entry(TokenList.empty, token, next)
     }
 }

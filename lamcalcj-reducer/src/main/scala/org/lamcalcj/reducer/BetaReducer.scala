@@ -53,7 +53,7 @@ object BetaReducer {
         }))
       } while (!aborted && (currentTerm match {
         case Var(_) => false
-        case Abs(_, _) => argumentStack.isEmpty
+        case Abs(_, _) => !evaluationOnly
         case App(_, _) => true
       }))
       while (argumentStack.nonEmpty) {

@@ -15,62 +15,47 @@ object BetaReducer {
     var step: Int = 0
     var aborted: Boolean = false
 
-    def reduce(inputTerm: Term): Term = {
+    def reduce(originalTerm: Term): Term =
       if (aborted)
-        return inputTerm
-      var currentTerm: Term = inputTerm
+        originalTerm
+      else
+        originalTerm match {
+          case Var(identifier) => Var(identifier)
+          case Abs(variable, term) => if (!evaluationOnly) Abs(variable, reduce(term)) else Abs(variable, term)
+          case App(term, argument) => reduceApp(term, argument, false)
+        }
 
-      val variableStack: ArrayStack[Var] = new ArrayStack
-      val argumentStack: ArrayStack[Term] = new ArrayStack
-      do {
-        if (!evaluationOnly) do {} while (currentTerm match {
-          case Abs(variable, term) => {
-            variableStack.push(variable)
-            currentTerm = term
-            true
+    def reduceApp(originalTerm: Term, originalArgument: Term, hasOuterArugment: Boolean): Term =
+      if (aborted)
+        App(originalTerm, originalArgument)
+      else
+        originalTerm match {
+          case Var(identifier) => App(Var(identifier), if (!headOnly) reduce(originalArgument) else originalArgument)
+          case Abs(variable, term) => reduceBetaRedex(variable, term, originalArgument) match {
+            case Var(identifier) => Var(identifier)
+            case Abs(variable, term) => if (hasOuterArugment) Abs(variable, term) else reduce(Abs(variable, term))
+            case App(term, argument) => reduceApp(term, argument, hasOuterArugment)
           }
-          case _ => false
-        })
-        do {} while (currentTerm match {
-          case App(term, argument) => {
-            argumentStack.push(argument)
-            currentTerm = term
-            true
+          case App(term, argument) => reduceApp(term, argument, true) match {
+            case Abs(variable, term) => reduceApp(Abs(variable, term), originalArgument, hasOuterArugment)
+            case term => App(term, if (!headOnly) reduce(originalArgument) else originalArgument)
           }
-          case _ => false
-        })
-        do {} while (!aborted && argumentStack.nonEmpty && (currentTerm match {
-          case Abs(variable, term) => {
-            if (step >= maxStep)
-              aborted = true
-            else {
-              step += 1
-              currentTerm = substitute(term, variable.identifier, argumentStack.pop())
-            }
-            true
-          }
-          case _ => false
-        }))
-      } while (!aborted && (currentTerm match {
-        case Var(_) => false
-        case Abs(_, _) => !evaluationOnly
-        case App(_, _) => true
-      }))
-      while (argumentStack.nonEmpty) {
-        val argument: Term = argumentStack.pop()
-        currentTerm = App(currentTerm, if (!headOnly) reduce(argument) else argument)
+        }
+
+    def reduceBetaRedex(variable: Var, term: Term, argument: Term): Term = {
+      if (step >= maxStep) {
+        aborted = true
+        App(Abs(variable, term), argument)
+      } else {
+        step += 1
+        substitute(variable.identifier, term, argument)
       }
-      while (variableStack.nonEmpty) {
-        val variable: Var = variableStack.pop()
-        currentTerm = Abs(variable, currentTerm)
-      }
-      return currentTerm
     }
 
-    def substitute(e: Term, id: Identifier, r: Term): Term = e match {
+    def substitute(id: Identifier, e: Term, r: Term): Term = e match {
       case Var(identifier) => if (identifier == id) Utils.cloneTerm(r) else Var(identifier)
-      case Abs(variable, term) => Abs(variable, substitute(term, id, r))
-      case App(term, argument) => App(substitute(term, id, r), substitute(argument, id, r))
+      case Abs(variable, term) => Abs(variable, substitute(id, term, r))
+      case App(term, argument) => App(substitute(id, term, r), substitute(id, argument, r))
     }
   }
 }

@@ -33,7 +33,7 @@ object PrettyPrint {
 
     def printLambda(term: Term, enclosed: Boolean): Trampoline[String] =
       if (omitRedundantGroup && (enclosed || enclosedTerm(term)))
-        printTerm(term)
+        More(() => printTerm(term))
       else
         for {
           termPP <- printTerm(term)
@@ -43,13 +43,13 @@ object PrettyPrint {
     def printTerm(term: Term): Trampoline[String] =
       term match {
         case Var(identifier) => Done(symbols.symbolVariableBegin + identifier.name + symbols.symbolVariableEnd)
-        case Abs(variable, term) => printAbsTopLevel(Abs(variable, term))
-        case App(term, argument) => printAppTopLevel(App(term, argument))
+        case Abs(variable, term) => More(() => printAbsTopLevel(Abs(variable, term)))
+        case App(term, argument) => More(() => printAppTopLevel(App(term, argument)))
       }
 
     def printAbsTopLevel(term: Abs): Trampoline[String] =
       for {
-        termPP <- if (uncurryingAbstraction) printAbsInnerLevel(term.term) else printLambda(term.term, true)
+        termPP <- if (uncurryingAbstraction) More(() => printAbsInnerLevel(term.term)) else More(() => printLambda(term.term, true))
       } yield
         symbols.symbolAbstractionBegin +
         symbols.symbolArgumentsBegin +
@@ -83,7 +83,7 @@ object PrettyPrint {
 
     def printAppTopLevel(term: App): Trampoline[String] =
       for {
-        termPP <- if (chainApplication) printAppInnerLevel(term.term) else printLambda(term.term, false)
+        termPP <- if (chainApplication) More(() => printAppInnerLevel(term.term)) else More(() => printLambda(term.term, false))
         argumentPP <- printLambda(term.argument, false)
       } yield
         symbols.symbolApplyBegin +

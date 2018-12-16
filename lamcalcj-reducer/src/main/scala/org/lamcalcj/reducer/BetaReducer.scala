@@ -27,7 +27,7 @@ object BetaReducer {
               currentTerm <- reduce(term)
             } yield Abs(variable, currentTerm)
           else Done(Abs(variable, term))
-          case App(term, argument) => reduceApp(term, argument, false)
+          case App(term, argument) => More(() => reduceApp(term, argument, false))
         }
 
     def reduceApp(originalTerm: Term, originalArgument: Term, hasOuterArugment: Boolean): Trampoline[Term] =
@@ -41,14 +41,14 @@ object BetaReducer {
             } yield App(Var(identifier), if (!headOnly) currentTerm else originalArgument)
           case Abs(variable, term) => reduceBetaRedex(variable, term, originalArgument) match {
             case Var(identifier) => Done(Var(identifier))
-            case Abs(variable, term) => if (hasOuterArugment) Done(Abs(variable, term)) else reduce(Abs(variable, term))
-            case App(term, argument) => reduceApp(term, argument, hasOuterArugment)
+            case Abs(variable, term) => if (hasOuterArugment) Done(Abs(variable, term)) else More(() => reduce(Abs(variable, term)))
+            case App(term, argument) => More(() => reduceApp(term, argument, hasOuterArugment))
           }
           case App(term, argument) =>
             for {
               currentTerm <- reduceApp(term, argument, true)
               resultTerm <- currentTerm match {
-                case Abs(variable, term) => reduceApp(Abs(variable, term), originalArgument, hasOuterArugment)
+                case Abs(variable, term) => More(() => reduceApp(Abs(variable, term), originalArgument, hasOuterArugment))
                 case term => for {
                   currentTerm <- reduce(originalArgument)
                 } yield App(term, if (!headOnly) currentTerm else originalArgument)
@@ -62,14 +62,19 @@ object BetaReducer {
         App(Abs(variable, term), argument)
       } else {
         step += 1
-        substitute(variable.identifier, term, argument)
+        substitute(variable.identifier, term, argument).runT
       }
     }
 
-    def substitute(id: Identifier, e: Term, r: Term): Term = e match {
-      case Var(identifier) => if (identifier == id) Utils.cloneTerm(r) else Var(identifier)
-      case Abs(variable, term) => Abs(variable, substitute(id, term, r))
-      case App(term, argument) => App(substitute(id, term, r), substitute(id, argument, r))
+    def substitute(originalIdentifier: Identifier, originalTerm: Term, originalArgument: Term): Trampoline[Term] = originalTerm match {
+      case Var(identifier) => if (identifier == originalIdentifier) Done(Utils.cloneTerm(originalArgument)) else Done(Var(identifier))
+      case Abs(variable, term) => for {
+        currentTerm <- substitute(originalIdentifier, term, originalArgument)
+      } yield Abs(variable, currentTerm)
+      case App(term, argument) => for {
+        currentTerm <- substitute(originalIdentifier, term, originalArgument)
+        currentArgument <- substitute(originalIdentifier, argument, originalArgument)
+      } yield App(currentTerm, currentArgument)
     }
   }
 }

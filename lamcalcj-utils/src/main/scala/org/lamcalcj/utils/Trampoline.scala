@@ -17,16 +17,15 @@ object Trampoline {
       case Left(k) => k().runT
     }
 
-    def flatMap[B](f: A => Trampoline[B]): Trampoline[B] = this match {
+    final def flatMap[B](f: A => Trampoline[B]): Trampoline[B] = this match {
       case FlatMap(a, g) => FlatMap(a, (x: Any) => g(x) flatMap f)
       case x => FlatMap(x, f)
     }
 
-    def map[B](f: A => B): Trampoline[B] =
+    final def map[B](f: A => B): Trampoline[B] =
       flatMap(a => Done(f(a)))
   }
   case class Done[+A](a: A) extends Trampoline[A]
   case class More[+A](k: () => Trampoline[A]) extends Trampoline[A]
   case class FlatMap[A, +B](sub: Trampoline[A], k: A => Trampoline[B]) extends Trampoline[B]
-
 }

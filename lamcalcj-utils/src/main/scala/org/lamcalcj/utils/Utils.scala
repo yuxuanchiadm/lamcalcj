@@ -137,7 +137,7 @@ object Utils {
       case Var(identifier) =>
         Done(!unbounded.contains(identifier))
       case Abs(variable, term) =>
-        isTermProperlyBounded(term, unbounded - variable.identifier)
+        More(() => isTermProperlyBounded(term, unbounded - variable.identifier))
       case App(term, argument) =>
         for {
           termPB <- isTermProperlyBounded(term, unbounded)

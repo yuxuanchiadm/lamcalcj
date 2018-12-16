@@ -39,57 +39,55 @@ object PrettyPrint {
     def printTerm(term: Term): String =
       term match {
         case Var(identifier) => symbols.symbolVariableBegin + identifier.name + symbols.symbolVariableEnd
-        case Abs(variable, term) => {
-          if (uncurryingAbstraction) {
-            val builder: StringBuilder = new StringBuilder()
-            builder ++= symbols.symbolAbstractionBegin
-            builder ++= symbols.symbolArgumentsBegin
-            builder ++= variable.identifier.name
-            var current: Term = term
-            do {} while (current match {
-              case Abs(variable, term) => {
-                builder ++= symbols.symbolArgumentsSeparator
-                builder ++= variable.identifier.name
-                current = term
-                true
-              }
-              case _ => false
-            })
-            builder ++= symbols.symbolArgumentsEnd
-            builder ++= symbols.symbolAbstractionSeparator
-            builder ++= printLambda(current, true)
-            builder ++= symbols.symbolAbstractionEnd
-            builder.toString
-          } else symbols.symbolAbstractionBegin + symbols.symbolArgumentsBegin + variable.identifier.name + symbols.symbolArgumentsEnd +
-            symbols.symbolAbstractionSeparator + printLambda(term, true) + symbols.symbolAbstractionEnd
-        }
-        case App(term, argument) => {
-          if (chainApplication) {
-            val builder: StringBuilder = new StringBuilder()
-            builder ++= symbols.symbolApplyBegin
-            var applicationChain: List[Term] = List.empty
-            var current: Term = term
-            do {} while (current match {
-              case App(term, argument) => {
-                applicationChain = argument :: applicationChain
-                current = term
-                true
-              }
-              case term => {
-                applicationChain = term :: applicationChain
-                false
-              }
-            })
-            applicationChain.foreach(term => {
-              builder ++= printLambda(term, false)
-              builder ++= symbols.symbolApplySeparator
-            })
-            builder ++= printLambda(argument, false)
-            builder ++= symbols.symbolApplyEnd
-            builder.toString
-          } else symbols.symbolApplyBegin + printLambda(term, false) + symbols.symbolApplySeparator + printLambda(argument, false) +
-            symbols.symbolApplyEnd
-        }
+        case Abs(variable, term) => printAbsTopLevel(Abs(variable, term))
+        case App(term, argument) => printAppTopLevel(App(term, argument))
+      }
+
+    def printAbsTopLevel(term: Abs): String =
+      symbols.symbolAbstractionBegin +
+      symbols.symbolArgumentsBegin +
+      term.variable.identifier.name +
+      ( if (uncurryingAbstraction)
+          printAbsInnerLevel(term.term)
+        else
+          symbols.symbolArgumentsEnd +
+          symbols.symbolAbstractionSeparator +
+          printLambda(term.term, true)
+      ) +
+      symbols.symbolAbstractionEnd
+
+    def printAbsInnerLevel(term: Term): String =
+      term match {
+        case Abs(variable, term) =>
+          symbols.symbolArgumentsSeparator +
+          variable.identifier.name +
+          printAbsInnerLevel(term)
+        case _ =>
+          symbols.symbolArgumentsEnd +
+          symbols.symbolAbstractionSeparator +
+          printLambda(term, true)
+      }
+
+    def printAppTopLevel(term: App): String =
+      symbols.symbolApplyBegin +
+      ( if (chainApplication)
+          printAppInnerLevel(term.term)
+        else
+          printLambda(term.term, false) +
+          symbols.symbolApplySeparator
+      ) +
+      printLambda(term.argument, false) +
+      symbols.symbolApplyEnd
+
+    def printAppInnerLevel(term: Term): String =
+      term match {
+        case App(term, argument) =>
+          printAppInnerLevel(term) +
+          printLambda(argument, false) +
+          symbols.symbolApplySeparator
+        case _ =>
+          printLambda(term, false) +
+          symbols.symbolApplySeparator
       }
   }
 }

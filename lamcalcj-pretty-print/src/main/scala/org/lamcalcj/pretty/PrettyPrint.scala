@@ -1,6 +1,7 @@
 package org.lamcalcj.pretty
 
 import org.lamcalcj.ast.Lambda._
+import org.lamcalcj.utils.Trampoline._
 import org.lamcalcj.utils.Utils
 import scala.collection.mutable.Builder
 
@@ -21,7 +22,7 @@ object PrettyPrint {
     uncurryingAbstraction: Boolean = true,
     chainApplication: Boolean = true,
     enclosedTerm: Term => Boolean = _.isInstanceOf[Var]): String =
-    new PrettyPrint(symbols, omitRedundantGroup, uncurryingAbstraction, chainApplication, enclosedTerm).printLambda(term, true)
+    new PrettyPrint(symbols, omitRedundantGroup, uncurryingAbstraction, chainApplication, enclosedTerm).printLambda(term, true).runT
 
   private class PrettyPrint(
     symbols: Symbols,
@@ -30,64 +31,87 @@ object PrettyPrint {
     chainApplication: Boolean,
     enclosedTerm: Term => Boolean) {
 
-    def printLambda(term: Term, enclosed: Boolean): String =
+    def printLambda(term: Term, enclosed: Boolean): Trampoline[String] =
       if (omitRedundantGroup && (enclosed || enclosedTerm(term)))
         printTerm(term)
       else
-        symbols.symbolGroupBegin + printTerm(term) + symbols.symbolGroupEnd
+        for {
+          termPP <- printTerm(term)
+        } yield
+          symbols.symbolGroupBegin + termPP + symbols.symbolGroupEnd
 
-    def printTerm(term: Term): String =
+    def printTerm(term: Term): Trampoline[String] =
       term match {
-        case Var(identifier) => symbols.symbolVariableBegin + identifier.name + symbols.symbolVariableEnd
+        case Var(identifier) => Done(symbols.symbolVariableBegin + identifier.name + symbols.symbolVariableEnd)
         case Abs(variable, term) => printAbsTopLevel(Abs(variable, term))
         case App(term, argument) => printAppTopLevel(App(term, argument))
       }
 
-    def printAbsTopLevel(term: Abs): String =
-      symbols.symbolAbstractionBegin +
-      symbols.symbolArgumentsBegin +
-      term.variable.identifier.name +
-      ( if (uncurryingAbstraction)
-          printAbsInnerLevel(term.term)
-        else
-          symbols.symbolArgumentsEnd +
-          symbols.symbolAbstractionSeparator +
-          printLambda(term.term, true)
-      ) +
-      symbols.symbolAbstractionEnd
+    def printAbsTopLevel(term: Abs): Trampoline[String] =
+      for {
+        termPP <- if (uncurryingAbstraction) printAbsInnerLevel(term.term) else printLambda(term.term, true)
+      } yield
+        symbols.symbolAbstractionBegin +
+        symbols.symbolArgumentsBegin +
+        term.variable.identifier.name +
+        ( if (uncurryingAbstraction)
+            termPP
+          else
+            symbols.symbolArgumentsEnd +
+            symbols.symbolAbstractionSeparator +
+            termPP
+        ) +
+        symbols.symbolAbstractionEnd
 
-    def printAbsInnerLevel(term: Term): String =
+    def printAbsInnerLevel(term: Term): Trampoline[String] =
       term match {
         case Abs(variable, term) =>
-          symbols.symbolArgumentsSeparator +
-          variable.identifier.name +
-          printAbsInnerLevel(term)
+          for {
+            termPP <- printAbsInnerLevel(term)
+          } yield
+            symbols.symbolArgumentsSeparator +
+            variable.identifier.name +
+            termPP
         case _ =>
-          symbols.symbolArgumentsEnd +
-          symbols.symbolAbstractionSeparator +
-          printLambda(term, true)
+          for {
+            termPP <- printLambda(term, true)
+          } yield
+            symbols.symbolArgumentsEnd +
+            symbols.symbolAbstractionSeparator +
+            termPP
       }
 
-    def printAppTopLevel(term: App): String =
-      symbols.symbolApplyBegin +
-      ( if (chainApplication)
-          printAppInnerLevel(term.term)
-        else
-          printLambda(term.term, false) +
-          symbols.symbolApplySeparator
-      ) +
-      printLambda(term.argument, false) +
-      symbols.symbolApplyEnd
+    def printAppTopLevel(term: App): Trampoline[String] =
+      for {
+        termPP <- if (chainApplication) printAppInnerLevel(term.term) else printLambda(term.term, false)
+        argumentPP <- printLambda(term.argument, false)
+      } yield
+        symbols.symbolApplyBegin +
+        ( if (chainApplication)
+            termPP
+          else
+            termPP +
+            symbols.symbolApplySeparator
+        ) +
+        argumentPP +
+        symbols.symbolApplyEnd
 
-    def printAppInnerLevel(term: Term): String =
+    def printAppInnerLevel(term: Term): Trampoline[String] =
       term match {
         case App(term, argument) =>
-          printAppInnerLevel(term) +
-          printLambda(argument, false) +
-          symbols.symbolApplySeparator
+          for {
+            termPP <- printAppInnerLevel(term)
+            argumentPP <- printLambda(argument, false)
+          } yield
+            termPP +
+            argumentPP +
+            symbols.symbolApplySeparator
         case _ =>
-          printLambda(term, false) +
-          symbols.symbolApplySeparator
+          for {
+            termPP <- printLambda(term, false)
+          } yield
+            termPP +
+            symbols.symbolApplySeparator
       }
   }
 }

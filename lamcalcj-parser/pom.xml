@@ -25,8 +25,8 @@
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
-			<groupId>org.monadscala</groupId>
-			<artifactId>monadscala</artifactId>
+			<groupId>org.lamcalcj</groupId>
+			<artifactId>lamcalcj-utils</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>

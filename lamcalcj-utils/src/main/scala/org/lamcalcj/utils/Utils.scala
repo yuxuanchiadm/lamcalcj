@@ -16,15 +16,15 @@ object Utils {
           val unusedName: String = findUnusedName(variable.identifier.name, usedNames)
           val identifier: Identifier = Identifier(unusedName)
           for {
-            currentTerm <- alphaConversionT(term, usedNames + unusedName, mapping + (variable.identifier -> identifier))
+            currentTerm <- More(() => alphaConversionT(term, usedNames + unusedName, mapping + (variable.identifier -> identifier)))
           } yield Abs(Var(identifier), currentTerm)
         } else for {
-          currentTerm <- alphaConversionT(term, usedNames + variable.identifier.name, mapping)
+          currentTerm <- More(() => alphaConversionT(term, usedNames + variable.identifier.name, mapping))
         } yield Abs(variable, currentTerm)
       case App(term, argument) =>
         for {
-          currentTerm <- alphaConversionT(term, usedNames, mapping)
-          currentArgument <- alphaConversionT(argument, usedNames, mapping)
+          currentTerm <- More(() => alphaConversionT(term, usedNames, mapping))
+          currentArgument <- More(() => alphaConversionT(argument, usedNames, mapping))
         } yield App(currentTerm, currentArgument)
     }
   def freeVariables(term: Term, bounds: Set[Identifier] = Set.empty): Set[Identifier] =
@@ -35,11 +35,11 @@ object Utils {
       case Var(identifier) =>
         if (bounds.contains(identifier)) Done(Set.empty) else Done(Set(identifier))
       case Abs(variable, term) =>
-        freeVariablesT(term, bounds + (variable.identifier))
+        More(() => freeVariablesT(term, bounds + (variable.identifier)))
       case App(term, argument) =>
         for {
-          termFV <- freeVariablesT(term, bounds)
-          argumentFV <- freeVariablesT(argument, bounds)
+          termFV <- More(() => freeVariablesT(term, bounds))
+          argumentFV <- More(() => freeVariablesT(argument, bounds))
         } yield termFV ++ argumentFV
     }
 
@@ -51,12 +51,12 @@ object Utils {
       case Var(identifier) => Done(identifier == id);
       case Abs(variable, term) =>
         for {
-          termFO <- hasFreeOccurrenceT(term, id)
+          termFO <- More(() => hasFreeOccurrenceT(term, id))
         } yield variable.identifier != id && termFO
       case App(term, argument) =>
         for {
-          termFO <- hasFreeOccurrenceT(term, id)
-          argumentFO <- hasFreeOccurrenceT(argument, id)
+          termFO <- More(() => hasFreeOccurrenceT(term, id))
+          argumentFO <- More(() => hasFreeOccurrenceT(argument, id))
         } yield termFO || argumentFO
     }
 
@@ -69,12 +69,12 @@ object Utils {
         Done(other.isInstanceOf[Var] && other.asInstanceOf[Var].identifier == bounds.get(identifier).getOrElse(identifier))
       case Abs(variable, term) =>
         for {
-          termAE <- isAlphaEquivalentT(term, other.asInstanceOf[Abs].term, bounds + (variable.identifier -> other.asInstanceOf[Abs].variable.identifier))
+          termAE <- More(() => isAlphaEquivalentT(term, other.asInstanceOf[Abs].term, bounds + (variable.identifier -> other.asInstanceOf[Abs].variable.identifier)))
         } yield other.isInstanceOf[Abs] && termAE
       case App(term, argument) =>
         for {
-          termAE <- isAlphaEquivalentT(term, other.asInstanceOf[App].term, bounds)
-          argumentAE <- isAlphaEquivalentT(argument, other.asInstanceOf[App].argument, bounds)
+          termAE <- More(() => isAlphaEquivalentT(term, other.asInstanceOf[App].term, bounds))
+          argumentAE <- More(() => isAlphaEquivalentT(argument, other.asInstanceOf[App].argument, bounds))
         } yield other.isInstanceOf[App] && termAE && argumentAE
     }
 
@@ -97,13 +97,13 @@ object Utils {
       case Abs(variable, term) => {
         val identifier: Identifier = Identifier(variable.identifier.name)
         for {
-          currentTerm <- cloneTermT(term, mapping + (variable.identifier -> identifier))
+          currentTerm <- More(() => cloneTermT(term, mapping + (variable.identifier -> identifier)))
         } yield Abs(Var(identifier), currentTerm)
       }
       case App(term, argument) =>
         for {
-          currentTerm <- cloneTermT(term, mapping)
-          currentArgument <- cloneTermT(argument, mapping)
+          currentTerm <- More(() => cloneTermT(term, mapping))
+          currentArgument <- More(() => cloneTermT(argument, mapping))
         } yield App(currentTerm, currentArgument)
     }
 
@@ -116,15 +116,15 @@ object Utils {
         Done(Option(Set.empty))
       case Abs(variable, term) =>
         for {
-          termBV <- boundedVariables(term)
+          termBV <- More(() => boundedVariables(term))
         } yield for {
           termBounds <- termBV
           result <- if (termBounds.contains(variable.identifier)) Option.empty else Option(termBounds + variable.identifier)
         } yield result
       case App(term, argument) =>
         for {
-          termBV <- boundedVariables(term)
-          argumentBV <- boundedVariables(argument)
+          termBV <- More(() => boundedVariables(term))
+          argumentBV <- More(() => boundedVariables(argument))
         } yield for {
           termBounds <- termBV
           argumentBounds <- argumentBV
@@ -140,8 +140,8 @@ object Utils {
         More(() => isTermProperlyBounded(term, unbounded - variable.identifier))
       case App(term, argument) =>
         for {
-          termPB <- isTermProperlyBounded(term, unbounded)
-          argumentPB <- isTermProperlyBounded(argument, unbounded)
+          termPB <- More(() => isTermProperlyBounded(term, unbounded))
+          argumentPB <- More(() => isTermProperlyBounded(argument, unbounded))
         } yield termPB && argumentPB
     }
 }

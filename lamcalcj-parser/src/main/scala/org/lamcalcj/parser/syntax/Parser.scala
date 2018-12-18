@@ -4,14 +4,9 @@ import java.io.Reader
 
 import org.lamcalcj.ast.Lambda._
 import org.lamcalcj.parser.lexical._
-import org.lamcalcj.parser.lexical.Kind._
-import org.lamcalcj.parser.lexical.TokenList._
-import org.monadscala.Typelevel._
-import org.monadscala.instance.Either._
-import org.monadscala.typeclass._
+import org.lamcalcj.utils.Except._
 
 import scala.util.Either
-import scala.collection.mutable.Queue
 
 object Parser {
   def parse(
@@ -32,67 +27,63 @@ object Parser {
     tokenStream: TokenStream,
     bounds: Map[String, Identifier] = Map.empty): Either[(List[Kind], TokenList), (Map[String, Identifier], Term)] = {
     val parser: Parser = new Parser(tokenStream)
-    return parser.parseLambda(bounds).map((parser.freeVariables, _))
+    return parser.parseLambda(bounds).runExcept.map((parser.freeVariables, _))
   }
 
   private class Parser(tokenStream: TokenStream) {
-    val monad: Monad[Curry2[Either]# <[String]# <|] = Monad[Curry2[Either]# <[String]# <|]
-    import monad._
-
     var freeVariables: Map[String, Identifier] = Map.empty
 
-    def parseLambda(bounds: Map[String, Identifier]): Either[(List[Kind], TokenList), Term] = for {
-      term <- parseTermApp(bounds)
+    def parseLambda(bounds: Map[String, Identifier]): Except[(List[Kind], TokenList), Term] = for {
+      term <- recursive(() => parseTermApp(bounds))
       _ <- tokenStream.next(Kind.EOF)
     } yield term
 
-    def parseTermApp(bounds: Map[String, Identifier]): Either[(List[Kind], TokenList), Term] = for {
-      termFirst <- parseTerm(bounds)
-      term <- {
-        def parseChainedApp(termReceiver: Term): Either[(List[Kind], TokenList), Term] = for {
-          token <- tokenStream.peek(Kind.EOF, Kind.Abstract, Kind.Identifier, Kind.Begin, Kind.End)
-          termChained <- token.kind match {
-            case Kind.Abstract | Kind.Identifier | Kind.Begin => for {
-              termArgument <- parseTerm(bounds)
-              termApp <- parseChainedApp(App(termReceiver, termArgument))
-            } yield termApp
-            case Kind.EOF | Kind.End => Right(termReceiver)
-          }
-        } yield termChained
-        parseChainedApp(termFirst)
-      }
+    def parseTermApp(bounds: Map[String, Identifier]): Except[(List[Kind], TokenList), Term] = for {
+      termFirst <- recursive(() => parseTerm(bounds))
+      term <- recursive(() => parseChainedApp(bounds, termFirst))
     } yield term
 
-    def parseTerm(bounds: Map[String, Identifier]): Either[(List[Kind], TokenList), Term] = for {
+    def parseChainedApp(bounds: Map[String, Identifier], term: Term): Except[(List[Kind], TokenList), Term] = for {
+      token <- tokenStream.peek(Kind.EOF, Kind.Abstract, Kind.Identifier, Kind.Begin, Kind.End)
+      termChained <- token.kind match {
+        case Kind.Abstract | Kind.Identifier | Kind.Begin => for {
+          termArgument <- recursive(() => parseTerm(bounds))
+          termApp <- recursive(() => parseChainedApp(bounds, App(term, termArgument)))
+        } yield termApp
+        case Kind.EOF | Kind.End => unit[(List[Kind], TokenList), Term](term)
+      }
+    } yield termChained
+
+    def parseTerm(bounds: Map[String, Identifier]): Except[(List[Kind], TokenList), Term] = for {
       token <- tokenStream.peek(Kind.Abstract, Kind.Identifier, Kind.Begin)
       term <- token.kind match {
-        case Kind.Abstract => parseAbs(bounds)
-        case Kind.Identifier => parseVar(bounds)
-        case Kind.Begin => parseGroup(bounds)
+        case Kind.Abstract => recursive(() => parseAbs(bounds))
+        case Kind.Identifier => recursive(() => parseVar(bounds))
+        case Kind.Begin => recursive(() => parseGroup(bounds))
       }
     } yield term
 
-    def parseAbs(bounds: Map[String, Identifier]): Either[(List[Kind], TokenList), Term] = for {
+    def parseAbs(bounds: Map[String, Identifier]): Except[(List[Kind], TokenList), Term] = for {
       _ <- tokenStream.next(Kind.Abstract)
-      term <- parseAbsBody(bounds)
+      term <- recursive(() => parseAbsBody(bounds))
     } yield term
 
-    def parseAbsBody(bounds: Map[String, Identifier]): Either[(List[Kind], TokenList), Term] = for {
+    def parseAbsBody(bounds: Map[String, Identifier]): Except[(List[Kind], TokenList), Term] = for {
       token <- tokenStream.next(Kind.Identifier)
       name = token.image
       identifier = new Identifier(name)
       token <- tokenStream.peek(Kind.Identifier, Kind.Delimiter)
       termBody <- token.kind match {
-        case Kind.Identifier => parseAbsBody(bounds + (name -> identifier))
+        case Kind.Identifier => recursive(() => parseAbsBody(bounds + (name -> identifier)))
         case Kind.Delimiter => for {
           _ <- tokenStream.next(Kind.Delimiter)
-          term <- parseTermApp(bounds + (name -> identifier))
+          term <- recursive(() => recursive(() => parseTermApp(bounds + (name -> identifier))))
         } yield term
       }
       term = Abs(Var(identifier), termBody)
     } yield term
 
-    def parseVar(bounds: Map[String, Identifier]): Either[(List[Kind], TokenList), Term] = for {
+    def parseVar(bounds: Map[String, Identifier]): Except[(List[Kind], TokenList), Term] = for {
       token <- tokenStream.next(Kind.Identifier)
       name = token.image
       term = Var(bounds.get(name).getOrElse(freeVariables.get(name).getOrElse({
@@ -102,9 +93,9 @@ object Parser {
       })))
     } yield term
 
-    def parseGroup(bounds: Map[String, Identifier]): Either[(List[Kind], TokenList), Term] = for {
+    def parseGroup(bounds: Map[String, Identifier]): Except[(List[Kind], TokenList), Term] = for {
       _ <- tokenStream.next(Kind.Begin)
-      term <- parseTermApp(bounds)
+      term <- recursive(() => parseTermApp(bounds))
       _ <- tokenStream.next(Kind.End)
     } yield term
   }

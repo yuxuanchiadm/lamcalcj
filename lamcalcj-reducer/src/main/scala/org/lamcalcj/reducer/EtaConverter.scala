@@ -28,14 +28,14 @@ object EtaConverter {
               Done(term)
             }
           else for {
-            currentTerm <- convert(term)
+            currentTerm <- More(() => convert(term))
           } yield Abs(variable, App(if (evaluationOnly) term else currentTerm, Var(identifier)))
         case Abs(variable, term) => for {
-          currentTerm <- convert(term)
+          currentTerm <- More(() => convert(term))
         } yield Abs(variable, if (evaluationOnly) term else currentTerm)
         case App(term, argument) => for {
-          currentTerm <- convert(term)
-          currentArgument <- convert(argument)
+          currentTerm <- More(() => convert(term))
+          currentArgument <- More(() => convert(argument))
         } yield App(currentTerm, if (headOnly) argument else currentArgument)
       }
   }

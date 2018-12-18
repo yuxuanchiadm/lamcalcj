@@ -46,7 +46,7 @@ object BetaReducer {
           }
           case App(term, argument) =>
             for {
-              currentTerm <- reduceApp(term, argument, true)
+              currentTerm <- More(() => reduceApp(term, argument, true))
               resultTerm <- currentTerm match {
                 case Abs(variable, term) => More(() => reduceApp(Abs(variable, term), originalArgument, hasOuterArugment))
                 case term => for {
@@ -69,11 +69,11 @@ object BetaReducer {
     def substitute(originalIdentifier: Identifier, originalTerm: Term, originalArgument: Term): Trampoline[Term] = originalTerm match {
       case Var(identifier) => if (identifier == originalIdentifier) Done(Utils.cloneTerm(originalArgument)) else Done(Var(identifier))
       case Abs(variable, term) => for {
-        currentTerm <- substitute(originalIdentifier, term, originalArgument)
+        currentTerm <- More(() => substitute(originalIdentifier, term, originalArgument))
       } yield Abs(variable, currentTerm)
       case App(term, argument) => for {
-        currentTerm <- substitute(originalIdentifier, term, originalArgument)
-        currentArgument <- substitute(originalIdentifier, argument, originalArgument)
+        currentTerm <- More(() => substitute(originalIdentifier, term, originalArgument))
+        currentArgument <- More(() => substitute(originalIdentifier, argument, originalArgument))
       } yield App(currentTerm, currentArgument)
     }
   }

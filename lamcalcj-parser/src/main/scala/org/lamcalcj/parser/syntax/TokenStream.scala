@@ -3,27 +3,28 @@ package org.lamcalcj.parser.syntax
 import org.lamcalcj.parser.lexical._
 import org.lamcalcj.parser.lexical.Kind._
 import org.lamcalcj.parser.lexical.TokenList._
+import org.lamcalcj.utils.Except._
 
 class TokenStream(private var tokenList: TokenList) {
-  def peek(expected: Kind*): Either[(List[Kind], TokenList), Token] =
+  def peek(expected: Kind*): Except[(List[Kind], TokenList), Token] =
     tokenList match {
-      case Tail() => Left((expected.toList, tokenList))
+      case Tail() => throwE((expected.toList, tokenList))
       case Entry(special, token, next) =>
         if (expected.contains(token.kind)) {
-          Right(token)
+          unit(token)
         } else
-          Left((expected.toList, tokenList))
+          throwE((expected.toList, tokenList))
     }
 
-  def next(expected: Kind*): Either[(List[Kind], TokenList), Token] =
+  def next(expected: Kind*): Except[(List[Kind], TokenList), Token] =
     tokenList match {
-      case Tail() => Left((expected.toList, tokenList))
+      case Tail() => throwE((expected.toList, tokenList))
       case Entry(special, token, next) =>
         if (expected.contains(token.kind)) {
           tokenList = next
-          Right(token)
+          unit(token)
         } else
-          Left((expected.toList, tokenList))
+          throwE((expected.toList, tokenList))
     }
 
   def split(until: Kind, suffix: TokenList = TokenList.empty): TokenStream = {

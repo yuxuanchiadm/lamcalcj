@@ -36,7 +36,7 @@ object PrettyPrint {
         More(() => printTerm(term))
       else
         for {
-          termPP <- printTerm(term)
+          termPP <- More(() => printTerm(term))
         } yield
           symbols.symbolGroupBegin + termPP + symbols.symbolGroupEnd
 
@@ -67,14 +67,14 @@ object PrettyPrint {
       term match {
         case Abs(variable, term) =>
           for {
-            termPP <- printAbsInnerLevel(term)
+            termPP <- More(() => printAbsInnerLevel(term))
           } yield
             symbols.symbolArgumentsSeparator +
             variable.identifier.name +
             termPP
         case _ =>
           for {
-            termPP <- printLambda(term, true)
+            termPP <- More(() => printLambda(term, true))
           } yield
             symbols.symbolArgumentsEnd +
             symbols.symbolAbstractionSeparator +
@@ -84,7 +84,7 @@ object PrettyPrint {
     def printAppTopLevel(term: App): Trampoline[String] =
       for {
         termPP <- if (chainApplication) More(() => printAppInnerLevel(term.term)) else More(() => printLambda(term.term, false))
-        argumentPP <- printLambda(term.argument, false)
+        argumentPP <- More(() => printLambda(term.argument, false))
       } yield
         symbols.symbolApplyBegin +
         ( if (chainApplication)
@@ -100,15 +100,15 @@ object PrettyPrint {
       term match {
         case App(term, argument) =>
           for {
-            termPP <- printAppInnerLevel(term)
-            argumentPP <- printLambda(argument, false)
+            termPP <- More(() => printAppInnerLevel(term))
+            argumentPP <- More(() => printLambda(argument, false))
           } yield
             termPP +
             argumentPP +
             symbols.symbolApplySeparator
         case _ =>
           for {
-            termPP <- printLambda(term, false)
+            termPP <- More(() => printLambda(term, false))
           } yield
             termPP +
             symbols.symbolApplySeparator

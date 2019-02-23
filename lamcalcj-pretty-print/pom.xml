@@ -31,7 +31,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.lamcalcj</groupId>
-			<artifactId>lamcalcj-parser</artifactId>
+			<artifactId>lamcalcj-compiler</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 			<scope>test</scope>
 		</dependency>

@@ -20,6 +20,16 @@
 			<version>2.12.5</version>
 		</dependency>
 		<dependency>
+			<groupId>org.lamcalcj</groupId>
+			<artifactId>lamcalcj-ast</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.lamcalcj</groupId>
+			<artifactId>lamcalcj-parser</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
 			<groupId>org.scalatest</groupId>
 			<artifactId>scalatest_2.12</artifactId>
 			<version>3.0.5</version>

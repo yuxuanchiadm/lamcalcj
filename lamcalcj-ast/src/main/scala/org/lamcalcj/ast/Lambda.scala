@@ -5,7 +5,7 @@ object Lambda {
     def apply(name: String): Identifier = new Identifier(name)
   }
   sealed class Identifier(val name: String) {
-    override def toString(): String = name + "@" + ##
+    override def toString: String = name + "@" + ##
   }
 
   sealed trait Term

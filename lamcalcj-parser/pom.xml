@@ -21,11 +21,6 @@
 		</dependency>
 		<dependency>
 			<groupId>org.lamcalcj</groupId>
-			<artifactId>lamcalcj-ast</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>org.lamcalcj</groupId>
 			<artifactId>lamcalcj-utils</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>

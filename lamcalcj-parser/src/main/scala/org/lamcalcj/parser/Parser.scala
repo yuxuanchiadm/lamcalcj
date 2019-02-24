@@ -99,13 +99,10 @@ object Parser {
   sealed case class ResultSuccess[S, U, A](s: S, l: Location, u: U, a: A) extends Result[S, U, A]
   sealed case class ResultError[S, U, A](e: ParserError) extends Result[S, U, A]
 
-  sealed case class Message(message: String)
-  sealed class MessageUnexpected(message: String) extends Message(message: String)
-  object MessageUnexpected { def apply(message: String): MessageUnexpected = new MessageUnexpected(message) }
-  sealed class MessageExpected(message: String) extends Message(message)
-  object MessageExpected { def apply(message: String): MessageExpected = new MessageExpected(message) }
-  sealed class MessageRaw(message: String) extends Message(message)
-  object MessageRaw { def apply(message: String): MessageRaw = new MessageRaw(message) }
+  sealed abstract class Message(val message: String)
+  sealed case class MessageUnexpected (override val message: String) extends Message(message: String)
+  sealed case class MessageExpected(override val message: String) extends Message(message)
+  sealed case class MessageRaw(override val message: String) extends Message(message)
 
   sealed case class Location(line: Int, column: Int) {
     final def compare(l: Location): Int =

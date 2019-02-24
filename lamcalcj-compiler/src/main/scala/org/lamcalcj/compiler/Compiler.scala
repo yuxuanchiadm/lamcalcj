@@ -9,7 +9,11 @@ import org.lamcalcj.parser.Text._
 import org.lamcalcj.ast.Lambda._
 
 object Compiler {
-  def runLambdaParser(source: Text, location: Location = Location(1, 1), lambdaSyntax: LambdaSyntax = LambdaSyntax.default, freeVars: Map[String, Identifier] = Map.empty): Either[ParserError, (Map[String, Identifier], Term)] =
+  def runLambdaParser(
+    source: Text,
+    location: Location = Location(1, 1),
+    freeVars: Map[String, Identifier] = Map.empty,
+    lambdaSyntax: LambdaSyntax = LambdaSyntax.default): Either[ParserError, (Map[String, Identifier], Term)] =
     runParser(for {
       term <- LambdaParser(lambdaSyntax).lambdaTermP(Map.empty)
       _ <- eof

@@ -89,6 +89,10 @@ object Parser {
 
   final def modifyState[S, U](f: U => U): Parser[S, U, Unit] = Parser((s, l, u) => Done((false, ResultSuccess(s, l, f(u), ()))))
 
+  final def getLocation[S, U]: Parser[S, U, Location] = Parser((s, l, u) => Done((false, ResultSuccess(s, l, u, l))))
+
+  final def setLocation[S, U](l: Location): Parser[S, U, Unit] = Parser((s, l0, u) => Done((false, ResultSuccess(s, l, u, ()))))
+
   final def recursive[S, U, A](k: () => Parser[S, U, A]): Parser[S, U, A] = Parser((s, l, u) => More(() => k().unParser(s, l, u)))
 
   sealed trait Result[S, U, A]

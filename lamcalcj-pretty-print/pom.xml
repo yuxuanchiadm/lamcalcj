@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.lamcalcj</groupId>
 		<artifactId>lamcalcj-parent</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>1.0.0</version>
 	</parent>
 	<artifactId>lamcalcj-pretty-print</artifactId>
 
@@ -22,17 +22,17 @@
 		<dependency>
 			<groupId>org.lamcalcj</groupId>
 			<artifactId>lamcalcj-ast</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.lamcalcj</groupId>
 			<artifactId>lamcalcj-utils</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.lamcalcj</groupId>
 			<artifactId>lamcalcj-compiler</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>1.0.0</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

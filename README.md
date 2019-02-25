@@ -1,4 +1,4 @@
-# Lamcalcj
+# Lamcalcj [![Build Status](https://travis-ci.com/yuxuanchiadm/lamcalcj.svg?branch=master)](https://travis-ci.com/yuxuanchiadm/lamcalcj)
 
 Lamcalcj is a collection of lambda calculus libraries including:
 

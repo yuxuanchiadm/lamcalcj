@@ -14,6 +14,5 @@
 		<module>lamcalcj-reducer</module>
 		<module>lamcalcj-pretty-print</module>
 		<module>lamcalcj-compiler</module>
-		<module>lamcalcj-repl-parent</module>
 	</modules>
 </project>

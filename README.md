@@ -61,6 +61,25 @@ Add following to your `pom.xml` if using maven:
 </dependencies>
 ```
 
+Add following to your `build.gradle` if using gradle:
+
+```
+repositories {
+    maven {
+        name = 'lamcalcj-maven'
+        url = 'https://dl.bintray.com/yuxuanchiadm/lamcalcj-maven'
+    }
+}
+
+dependencies {
+    compile 'org.lamcalcj:lamcalcj-ast:1.0.0'
+    compile 'org.lamcalcj:lamcalcj-compiler:1.0.0'
+    compile 'org.lamcalcj:lamcalcj-pretty-print:1.0.0'
+    compile 'org.lamcalcj:lamcalcj-reducer:1.0.0'
+    compile 'org.lamcalcj:lamcalcj-utils:1.0.0'
+}
+```
+
 # Examples
 
 - GUI Interface: [https://github.com/yuxuanchiadm/lambdacore](https://github.com/yuxuanchiadm/lambdacore)

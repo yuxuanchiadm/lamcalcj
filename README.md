@@ -17,6 +17,50 @@ With following features supported:
 - Max step limitation can be given to reducer to avoid lambda terms those have no normal form.
 - Other utilities like alpha conversion for renaming, searching free variables, checking whether two terms are alpha equivalent, etc.
 
+# Usage
+
+Release build are pushed to maven repository.
+
+Add following to your `pom.xml` if using maven:
+
+```
+<repositories>
+	<repository>
+		<id>lamcalcj-maven</id>
+		<name>lamcalcj-maven</name>
+		<url>https://dl.bintray.com/yuxuanchiadm/lamcalcj-maven</url>
+	</repository>
+</repositories>
+
+<dependencies>
+	<dependency>
+		<groupId>org.lamcalcj</groupId>
+		<artifactId>lamcalcj-ast</artifactId>
+		<version>1.0.0</version>
+	</dependency>
+	<dependency>
+		<groupId>org.lamcalcj</groupId>
+		<artifactId>lamcalcj-compiler</artifactId>
+		<version>1.0.0</version>
+	</dependency>
+	<dependency>
+		<groupId>org.lamcalcj</groupId>
+		<artifactId>lamcalcj-pretty-print</artifactId>
+		<version>1.0.0</version>
+	</dependency>
+	<dependency>
+		<groupId>org.lamcalcj</groupId>
+		<artifactId>lamcalcj-reducer</artifactId>
+		<version>1.0.0</version>
+	</dependency>
+	<dependency>
+		<groupId>org.lamcalcj</groupId>
+		<artifactId>lamcalcj-utils</artifactId>
+		<version>1.0.0</version>
+	</dependency>
+</dependencies>
+```
+
 # Examples
 
 - GUI Interface: [https://github.com/yuxuanchiadm/lambdacore](https://github.com/yuxuanchiadm/lambdacore)

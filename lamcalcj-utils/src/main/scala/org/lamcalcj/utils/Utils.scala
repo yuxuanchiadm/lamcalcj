@@ -107,6 +107,36 @@ object Utils {
         } yield App(currentTerm, currentArgument)
     }
 
+  def calculateTermSize(term: Term): Int =
+    calculateTermSizeT(term).runT
+
+  def calculateTermSizeT(term: Term): Trampoline[Int] =
+    term match {
+      case Var(identifier) => Done(1)
+      case Abs(binding, term) => for {
+        termSize <- More(() => calculateTermSizeT(term))
+      } yield 1 + termSize
+      case App(term, argument) => for {
+        termSize <- More(() => calculateTermSizeT(term))
+        argumentSize <- More(() => calculateTermSizeT(argument))
+      } yield 1 + termSize + argumentSize
+    }
+
+  def calculateTermDepth(term: Term): Int =
+    calculateTermDepthT(term).runT
+
+  def calculateTermDepthT(term: Term): Trampoline[Int] =
+    term match {
+      case Var(identifier) => Done(1)
+      case Abs(binding, term) => for {
+        termSize <- More(() => calculateTermDepthT(term))
+      } yield 1 + termSize
+      case App(term, argument) => for {
+        termSize <- More(() => calculateTermDepthT(term))
+        argumentSize <- More(() => calculateTermDepthT(argument))
+      } yield 1 + Math.max(termSize, argumentSize)
+    }
+
   private def findUnusedName(name: String, usedNames: Set[String]): String =
     Stream.from(0).map({ name + _ }).filterNot(usedNames.contains).head
 

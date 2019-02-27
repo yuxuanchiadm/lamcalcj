@@ -80,4 +80,21 @@ class UtilsTest extends FunSpec {
       assert(!isTermValid(App(Abs(id_x, Var(id_x)), Var(id_x))))
     }
   }
+  describe("Term statistics") {
+    it("Term size") {
+      val id_x: Identifier = Identifier("x")
+      assertResult(1)(calculateTermSize(Var(id_x)))
+      assertResult(2)(calculateTermSize(Abs(id_x, Var(id_x))))
+      assertResult(3)(calculateTermSize(App(Var(id_x), Var(id_x))))
+      assertResult(4)(calculateTermSize(Abs(id_x, App(Var(id_x), Var(id_x)))))
+    }
+    it("Term depth") {
+      val id_x: Identifier = Identifier("x")
+      val id_y: Identifier = Identifier("y")
+      assertResult(1)(calculateTermDepth(Var(id_x)))
+      assertResult(2)(calculateTermDepth(App(Var(id_x), Var(id_x))))
+      assertResult(3)(calculateTermDepth(App(Var(id_x), App(Var(id_x), Var(id_x)))))
+      assertResult(4)(calculateTermDepth(App(Abs(id_y, Var(id_y)), App(Var(id_x), App(Var(id_x), Var(id_x))))))
+    }
+  }
 }

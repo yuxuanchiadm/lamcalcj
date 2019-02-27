@@ -6,13 +6,13 @@ import scala.collection.mutable.ArrayStack
 import org.lamcalcj.utils.Trampoline._
 
 object BetaReducer {
-  def betaReduction(term: Term, maxStep: Int = 0xFF, headOnly: Boolean = false, evaluationOnly: Boolean = false): (Boolean, Term) = {
+  def betaReduction(term: Term, maxStep: Option[Int] = Option(0xFF), headOnly: Boolean = false, evaluationOnly: Boolean = false): (Boolean, Term) = {
     val betaReducer: BetaReducer = new BetaReducer(maxStep, headOnly, evaluationOnly)
     val result: Term = betaReducer.reduce(term).runT
     return (!betaReducer.aborted, result)
   }
 
-  private class BetaReducer(maxStep: Int, headOnly: Boolean, evaluationOnly: Boolean) {
+  private class BetaReducer(maxStep: Option[Int], headOnly: Boolean, evaluationOnly: Boolean) {
     var step: Int = 0
     var aborted: Boolean = false
 
@@ -57,7 +57,7 @@ object BetaReducer {
         }
 
     def reduceBetaRedex(binding: Identifier, term: Term, argument: Term): Term = {
-      if (step >= maxStep) {
+      if (maxStep.map(step >= _).getOrElse(false)) {
         aborted = true
         App(Abs(binding, term), argument)
       } else {

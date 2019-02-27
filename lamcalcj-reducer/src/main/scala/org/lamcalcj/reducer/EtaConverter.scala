@@ -5,13 +5,13 @@ import org.lamcalcj.utils.Utils
 import org.lamcalcj.utils.Trampoline._
 
 object EtaConverter {
-  def etaConversion(term: Term, maxStep: Int = Int.MaxValue, headOnly: Boolean = false, evaluationOnly: Boolean = false): (Boolean, Term) = {
+  def etaConversion(term: Term, maxStep: Option[Int] = Option(Int.MaxValue), headOnly: Boolean = false, evaluationOnly: Boolean = false): (Boolean, Term) = {
     val etaConverter: EtaConverter = new EtaConverter(maxStep, headOnly, evaluationOnly)
     val result: Term = etaConverter.convert(term).runT
     return (!etaConverter.aborted, result)
   }
 
-  private class EtaConverter(maxStep: Int, headOnly: Boolean, evaluationOnly: Boolean) {
+  private class EtaConverter(maxStep: Option[Int], headOnly: Boolean, evaluationOnly: Boolean) {
     var step: Int = 0
     var aborted: Boolean = false
 
@@ -20,7 +20,7 @@ object EtaConverter {
         case Var(identifier) => Done(Var(identifier))
         case Abs(binding, App(term, Var(identifier))) =>
           if (binding == identifier && !Utils.hasFreeOccurrence(term, identifier))
-            if (step >= maxStep) {
+            if (maxStep.map(step >= _).getOrElse(false)) {
               aborted = true
               Done(inputTerm)
             } else {

@@ -11,16 +11,16 @@ object Utils {
     term match {
       case Var(identifier) =>
         Done(mapping.get(identifier).map(Var).getOrElse(term))
-      case Abs(variable, term) =>
-        if (usedNames.contains(variable.identifier.name)) {
-          val unusedName: String = findUnusedName(variable.identifier.name, usedNames)
+      case Abs(binding, term) =>
+        if (usedNames.contains(binding.name)) {
+          val unusedName: String = findUnusedName(binding.name, usedNames)
           val identifier: Identifier = Identifier(unusedName)
           for {
-            currentTerm <- More(() => alphaConversionT(term, usedNames + unusedName, mapping + (variable.identifier -> identifier)))
-          } yield Abs(Var(identifier), currentTerm)
+            currentTerm <- More(() => alphaConversionT(term, usedNames + unusedName, mapping + (binding -> identifier)))
+          } yield Abs(identifier, currentTerm)
         } else for {
-          currentTerm <- More(() => alphaConversionT(term, usedNames + variable.identifier.name, mapping))
-        } yield Abs(variable, currentTerm)
+          currentTerm <- More(() => alphaConversionT(term, usedNames + binding.name, mapping))
+        } yield Abs(binding, currentTerm)
       case App(term, argument) =>
         for {
           currentTerm <- More(() => alphaConversionT(term, usedNames, mapping))
@@ -34,8 +34,8 @@ object Utils {
     term match {
       case Var(identifier) =>
         if (bounds.contains(identifier)) Done(Set.empty) else Done(Set(identifier))
-      case Abs(variable, term) =>
-        More(() => freeVariablesT(term, bounds + (variable.identifier)))
+      case Abs(binding, term) =>
+        More(() => freeVariablesT(term, bounds + binding))
       case App(term, argument) =>
         for {
           termFV <- More(() => freeVariablesT(term, bounds))
@@ -49,10 +49,10 @@ object Utils {
   def hasFreeOccurrenceT(term: Term, id: Identifier): Trampoline[Boolean] =
     term match {
       case Var(identifier) => Done(identifier == id);
-      case Abs(variable, term) =>
+      case Abs(binding, term) =>
         for {
           termFO <- More(() => hasFreeOccurrenceT(term, id))
-        } yield variable.identifier != id && termFO
+        } yield binding != id && termFO
       case App(term, argument) =>
         for {
           termFO <- More(() => hasFreeOccurrenceT(term, id))
@@ -67,9 +67,9 @@ object Utils {
     term match {
       case Var(identifier) =>
         Done(other.isInstanceOf[Var] && other.asInstanceOf[Var].identifier == bounds.get(identifier).getOrElse(identifier))
-      case Abs(variable, term) =>
+      case Abs(binding, term) =>
         for {
-          termAE <- More(() => isAlphaEquivalentT(term, other.asInstanceOf[Abs].term, bounds + (variable.identifier -> other.asInstanceOf[Abs].variable.identifier)))
+          termAE <- More(() => isAlphaEquivalentT(term, other.asInstanceOf[Abs].term, bounds + (binding -> other.asInstanceOf[Abs].binding)))
         } yield other.isInstanceOf[Abs] && termAE
       case App(term, argument) =>
         for {
@@ -94,11 +94,11 @@ object Utils {
     term match {
       case Var(identifier) =>
         Done(mapping.get(identifier).map(Var).getOrElse(term))
-      case Abs(variable, term) => {
-        val identifier: Identifier = Identifier(variable.identifier.name)
+      case Abs(binding, term) => {
+        val identifier: Identifier = Identifier(binding.name)
         for {
-          currentTerm <- More(() => cloneTermT(term, mapping + (variable.identifier -> identifier)))
-        } yield Abs(Var(identifier), currentTerm)
+          currentTerm <- More(() => cloneTermT(term, mapping + (binding -> identifier)))
+        } yield Abs(identifier, currentTerm)
       }
       case App(term, argument) =>
         for {
@@ -114,12 +114,12 @@ object Utils {
     term match {
       case Var(identifier) =>
         Done(Option(Set.empty))
-      case Abs(variable, term) =>
+      case Abs(binding, term) =>
         for {
           termBV <- More(() => boundedVariables(term))
         } yield for {
           termBounds <- termBV
-          result <- if (termBounds.contains(variable.identifier)) Option.empty else Option(termBounds + variable.identifier)
+          result <- if (termBounds.contains(binding)) Option.empty else Option(termBounds + binding)
         } yield result
       case App(term, argument) =>
         for {
@@ -136,8 +136,8 @@ object Utils {
     term match {
       case Var(identifier) =>
         Done(!unbounded.contains(identifier))
-      case Abs(variable, term) =>
-        More(() => isTermProperlyBounded(term, unbounded - variable.identifier))
+      case Abs(binding, term) =>
+        More(() => isTermProperlyBounded(term, unbounded - binding))
       case App(term, argument) =>
         for {
           termPB <- More(() => isTermProperlyBounded(term, unbounded))

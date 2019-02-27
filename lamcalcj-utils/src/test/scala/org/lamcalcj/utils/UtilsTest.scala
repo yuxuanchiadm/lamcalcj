@@ -10,15 +10,15 @@ class UtilsTest extends FunSpec {
       val id_x: Identifier = Identifier("x")
       val id_y: Identifier = Identifier("y")
       assert(alphaConversion(Var(id_x)) == (Var(id_x)))
-      assert(alphaConversion(Abs(Var(id_x), Var(id_x))) == (Abs(Var(id_x), Var(id_x))))
+      assert(alphaConversion(Abs(id_x, Var(id_x))) == (Abs(id_x, Var(id_x))))
       assert(alphaConversion(
-        Abs(Var(id_x)) {
-          Abs(Var(id_y)) {
+        Abs(id_x) {
+          Abs(id_y) {
             App(Var(id_x), Var(id_y))
           }
         }) ==
-        Abs(Var(id_x)) {
-          Abs(Var(id_y)) {
+        Abs(id_x) {
+          Abs(id_y) {
             App(Var(id_x), Var(id_y))
           }
         })
@@ -26,13 +26,13 @@ class UtilsTest extends FunSpec {
     it("Overlapping bounded variable should be converted") {
       val id_x0: Identifier = Identifier("x")
       val id_x1: Identifier = Identifier("x")
-      assert(alphaConversion(Abs(Var(id_x0), Abs(Var(id_x1), Var(id_x1))))
-        .asInstanceOf[Abs].term.asInstanceOf[Abs].variable.identifier != id_x1)
+      assert(alphaConversion(Abs(id_x0, Abs(id_x1, Var(id_x1))))
+        .asInstanceOf[Abs].term.asInstanceOf[Abs].binding != id_x1)
     }
     it("Overlapping free variable should not be converted") {
       val id_x0: Identifier = Identifier("x")
       val id_x1: Identifier = Identifier("x")
-      assert(alphaConversion(Abs(Var(id_x0), Var(id_x1)))
+      assert(alphaConversion(Abs(id_x0, Var(id_x1)))
         .asInstanceOf[Abs].term.asInstanceOf[Var].identifier == id_x1)
     }
   }
@@ -42,7 +42,7 @@ class UtilsTest extends FunSpec {
       val id_y: Identifier = Identifier("y")
       assert(freeVariables(Var(id_x)) == Set(id_x))
       assert(freeVariables(App(Var(id_x), Var(id_y))) == Set(id_x, id_y))
-      assert(freeVariables(Abs(Var(id_x), Var(id_x))) == Set.empty)
+      assert(freeVariables(Abs(id_x, Var(id_x))) == Set.empty)
     }
   }
   describe("Alpha equivalence") {
@@ -51,7 +51,7 @@ class UtilsTest extends FunSpec {
       val id_y: Identifier = Identifier("y")
       assert(isAlphaEquivalent(Var(id_x), Var(id_x)))
       assert(isAlphaEquivalent(App(Var(id_x), Var(id_y)), App(Var(id_x), Var(id_y))))
-      assert(isAlphaEquivalent(Abs(Var(id_x), Var(id_x)), Abs(Var(id_x), Var(id_x))))
+      assert(isAlphaEquivalent(Abs(id_x, Var(id_x)), Abs(id_x, Var(id_x))))
     }
     it("Free variables not alpha equivalet") {
       val id_x: Identifier = Identifier("x")
@@ -62,7 +62,7 @@ class UtilsTest extends FunSpec {
     it("Alpha equivalence hold if alpha conversion is possible") {
       val id_x0: Identifier = Identifier("x")
       val id_x1: Identifier = Identifier("x")
-      assert(isAlphaEquivalent(Abs(Var(id_x0), Var(id_x0)), Abs(Var(id_x1), Var(id_x1))))
+      assert(isAlphaEquivalent(Abs(id_x0, Var(id_x0)), Abs(id_x1, Var(id_x1))))
     }
   }
   describe("Valid terms") {
@@ -71,13 +71,13 @@ class UtilsTest extends FunSpec {
       val id_y: Identifier = Identifier("y")
       assert(isTermValid(Var(id_x)))
       assert(isTermValid(App(Var(id_x), Var(id_y))))
-      assert(isTermValid(Abs(Var(id_x), Var(id_x))))
+      assert(isTermValid(Abs(id_x, Var(id_x))))
     }
     it("Invalid terms") {
       val id_x: Identifier = Identifier("x")
-      assert(!isTermValid(Abs(Var(id_x), Abs(Var(id_x), Var(id_x)))))
-      assert(!isTermValid(App(Abs(Var(id_x), Var(id_x)), Abs(Var(id_x), Var(id_x)))))
-      assert(!isTermValid(App(Abs(Var(id_x), Var(id_x)), Var(id_x))))
+      assert(!isTermValid(Abs(id_x, Abs(id_x, Var(id_x)))))
+      assert(!isTermValid(App(Abs(id_x, Var(id_x)), Abs(id_x, Var(id_x)))))
+      assert(!isTermValid(App(Abs(id_x, Var(id_x)), Var(id_x))))
     }
   }
 }

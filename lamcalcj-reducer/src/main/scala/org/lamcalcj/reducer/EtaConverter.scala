@@ -18,8 +18,8 @@ object EtaConverter {
     def convert(inputTerm: Term): Trampoline[Term] = if (aborted) Done(inputTerm) else
       inputTerm match {
         case Var(identifier) => Done(Var(identifier))
-        case Abs(variable, App(term, Var(identifier))) =>
-          if (variable.identifier == identifier && !Utils.hasFreeOccurrence(term, identifier))
+        case Abs(binding, App(term, Var(identifier))) =>
+          if (binding == identifier && !Utils.hasFreeOccurrence(term, identifier))
             if (step >= maxStep) {
               aborted = true
               Done(inputTerm)
@@ -29,10 +29,10 @@ object EtaConverter {
             }
           else for {
             currentTerm <- More(() => convert(term))
-          } yield Abs(variable, App(if (evaluationOnly) term else currentTerm, Var(identifier)))
-        case Abs(variable, term) => for {
+          } yield Abs(binding, App(if (evaluationOnly) term else currentTerm, Var(identifier)))
+        case Abs(binding, term) => for {
           currentTerm <- More(() => convert(term))
-        } yield Abs(variable, if (evaluationOnly) term else currentTerm)
+        } yield Abs(binding, if (evaluationOnly) term else currentTerm)
         case App(term, argument) => for {
           currentTerm <- More(() => convert(term))
           currentArgument <- More(() => convert(argument))

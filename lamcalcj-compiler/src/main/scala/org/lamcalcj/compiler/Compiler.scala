@@ -52,7 +52,7 @@ object Compiler {
         term <- bindings.foldRight((boundVars: Map[String, Identifier]) => lambdaSeparatorP(recursive(() => lambdaTermP(boundVars))))(
           (binding, f) => boundVars => for {
             term <- f(boundVars + (binding.name -> binding))
-          } yield Abs(Var(binding), term))(boundVars)
+          } yield Abs(binding, term))(boundVars)
       } yield term))
 
     def lambdaBindingP(boundVars: Map[String, Identifier]): Parser[Text, Map[String, Identifier], List[Identifier]] =

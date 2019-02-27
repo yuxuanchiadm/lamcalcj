@@ -10,9 +10,9 @@ object Lambda {
 
   sealed trait Term
   case class Var(identifier: Identifier) extends Term
-  case class Abs(variable: Var, term: Term) extends Term
+  case class Abs(binding: Identifier, term: Term) extends Term
   case class App(term: Term, argument: Term) extends Term
 
-  def Abs(variable: Var)(term: Term): Abs = Abs(variable, term)
+  def Abs(binding: Identifier)(term: Term): Abs = Abs(binding, term)
   def App(term: Term)(argument: Term): App = App(term, argument)
 }

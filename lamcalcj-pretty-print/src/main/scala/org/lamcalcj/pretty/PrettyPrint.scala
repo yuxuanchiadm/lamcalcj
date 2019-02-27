@@ -43,7 +43,7 @@ object PrettyPrint {
     def printTerm(term: Term): Trampoline[String] =
       term match {
         case Var(identifier) => Done(symbols.symbolVariableBegin + identifier.name + symbols.symbolVariableEnd)
-        case Abs(variable, term) => More(() => printAbsTopLevel(Abs(variable, term)))
+        case Abs(binding, term) => More(() => printAbsTopLevel(Abs(binding, term)))
         case App(term, argument) => More(() => printAppTopLevel(App(term, argument)))
       }
 
@@ -53,7 +53,7 @@ object PrettyPrint {
       } yield
         symbols.symbolAbstractionBegin +
         symbols.symbolArgumentsBegin +
-        term.variable.identifier.name +
+        term.binding.name +
         ( if (uncurryingAbstraction)
             termPP
           else
@@ -65,12 +65,12 @@ object PrettyPrint {
 
     def printAbsInnerLevel(term: Term): Trampoline[String] =
       term match {
-        case Abs(variable, term) =>
+        case Abs(binding, term) =>
           for {
             termPP <- More(() => printAbsInnerLevel(term))
           } yield
             symbols.symbolArgumentsSeparator +
-            variable.identifier.name +
+            binding.name +
             termPP
         case _ =>
           for {

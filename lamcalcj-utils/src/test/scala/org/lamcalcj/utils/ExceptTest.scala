@@ -2,7 +2,6 @@ package org.lamcalcj.utils
 
 import org.scalatest.FunSpec
 import org.lamcalcj.ast.Lambda._
-import org.lamcalcj.utils.Utils._
 import org.lamcalcj.utils.Except._
 
 class ExceptTest extends FunSpec {

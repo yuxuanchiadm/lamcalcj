@@ -15,17 +15,17 @@ object EtaConverter {
     var step: Int = 0
     var aborted: Boolean = false
 
-    def convert(inputTerm: Term): Trampoline[Term] = if (aborted) Done(inputTerm) else
-      inputTerm match {
+    def convert(originalTerm: Term): Trampoline[Term] = if (aborted) Done(originalTerm) else
+      originalTerm match {
         case Var(identifier) => Done(Var(identifier))
         case Abs(binding, App(term, Var(identifier))) =>
           if (binding == identifier && !Utils.hasFreeOccurrence(term, identifier))
             if (maxStep.map(step >= _).getOrElse(false)) {
               aborted = true
-              Done(inputTerm)
+              Done(originalTerm)
             } else {
               step += 1
-              Done(term)
+              More(() => convert(term))
             }
           else for {
             currentTerm <- More(() => convert(term))

@@ -107,33 +107,48 @@ object Utils {
         } yield App(currentTerm, currentArgument)
     }
 
-  def calculateTermSize(term: Term): Int =
-    calculateTermSizeT(term).runT
+  def substitute(term: Term, variable: Identifier, result: Term): Term =
+    substituteT(term, variable, result).runT
 
-  def calculateTermSizeT(term: Term): Trampoline[Int] =
+  def substituteT(term: Term, variable: Identifier, result: Term): Trampoline[Term] =
+    term match {
+      case Var(identifier) => if (identifier == variable) Done(Utils.cloneTerm(result)) else Done(Var(identifier))
+      case Abs(binding, term) => for {
+        currentTerm <- More(() => substituteT(term, variable, result))
+      } yield Abs(binding, currentTerm)
+      case App(term, argument) => for {
+        currentTerm <- More(() => substituteT(term, variable, result))
+        currentArgument <- More(() => substituteT(argument, variable, result))
+      } yield App(currentTerm, currentArgument)
+    }
+
+  def analyzeTermSize(term: Term): Int =
+    analyzeTermSizeT(term).runT
+
+  def analyzeTermSizeT(term: Term): Trampoline[Int] =
     term match {
       case Var(identifier) => Done(1)
       case Abs(binding, term) => for {
-        termSize <- More(() => calculateTermSizeT(term))
+        termSize <- More(() => analyzeTermSizeT(term))
       } yield 1 + termSize
       case App(term, argument) => for {
-        termSize <- More(() => calculateTermSizeT(term))
-        argumentSize <- More(() => calculateTermSizeT(argument))
+        termSize <- More(() => analyzeTermSizeT(term))
+        argumentSize <- More(() => analyzeTermSizeT(argument))
       } yield 1 + termSize + argumentSize
     }
 
-  def calculateTermDepth(term: Term): Int =
-    calculateTermDepthT(term).runT
+  def analyzeTermDepth(term: Term): Int =
+    analyzeTermDepthT(term).runT
 
-  def calculateTermDepthT(term: Term): Trampoline[Int] =
+  def analyzeTermDepthT(term: Term): Trampoline[Int] =
     term match {
       case Var(identifier) => Done(1)
       case Abs(binding, term) => for {
-        termSize <- More(() => calculateTermDepthT(term))
+        termSize <- More(() => analyzeTermDepthT(term))
       } yield 1 + termSize
       case App(term, argument) => for {
-        termSize <- More(() => calculateTermDepthT(term))
-        argumentSize <- More(() => calculateTermDepthT(argument))
+        termSize <- More(() => analyzeTermDepthT(term))
+        argumentSize <- More(() => analyzeTermDepthT(argument))
       } yield 1 + Math.max(termSize, argumentSize)
     }
 

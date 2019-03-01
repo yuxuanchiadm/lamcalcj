@@ -62,19 +62,8 @@ object BetaReducer {
         App(Abs(binding, term), argument)
       } else {
         step += 1
-        substitute(binding, term, argument).runT
+        Utils.substitute(term, binding, argument)
       }
-    }
-
-    def substitute(originalIdentifier: Identifier, originalTerm: Term, originalArgument: Term): Trampoline[Term] = originalTerm match {
-      case Var(identifier) => if (identifier == originalIdentifier) Done(Utils.cloneTerm(originalArgument)) else Done(Var(identifier))
-      case Abs(binding, term) => for {
-        currentTerm <- More(() => substitute(originalIdentifier, term, originalArgument))
-      } yield Abs(binding, currentTerm)
-      case App(term, argument) => for {
-        currentTerm <- More(() => substitute(originalIdentifier, term, originalArgument))
-        currentArgument <- More(() => substitute(originalIdentifier, argument, originalArgument))
-      } yield App(currentTerm, currentArgument)
     }
   }
 }

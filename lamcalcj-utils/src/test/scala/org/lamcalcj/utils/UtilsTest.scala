@@ -96,4 +96,19 @@ class UtilsTest extends FunSpec {
       assertResult(4)(Utils.analyzeTermDepth(App(Abs(id_y, Var(id_y)), App(Var(id_x), App(Var(id_x), Var(id_x))))))
     }
   }
+  describe("Term substitution") {
+    it("Trivial terms") {
+      val id_x: Identifier = Identifier("x")
+      val id_y: Identifier = Identifier("y")
+      assertResult(Var(id_y))(Utils.substitute(Var(id_x), id_x, Var(id_y)))
+      assertResult(Abs(id_x, Var(id_x)))(Utils.substitute(Abs(id_x, Var(id_x)), id_x, Var(id_y)))
+      assertResult(App(Var(id_y), Var(id_y)))(Utils.substitute(App(Var(id_x), Var(id_x)), id_x, Var(id_y)))
+    }
+    it("Result term should be copied") {
+      val id_x: Identifier = Identifier("x")
+      val id_y: Identifier = Identifier("y")
+      assert(Utils.substitute(Var(id_x), id_x, Abs(id_y, Var(id_y))) != Abs(id_y, Var(id_y)))
+      assert(Utils.isAlphaEquivalent(Abs(id_y, Var(id_y)), Utils.substitute(Var(id_x), id_x, Abs(id_y, Var(id_y)))))
+    }
+  }
 }

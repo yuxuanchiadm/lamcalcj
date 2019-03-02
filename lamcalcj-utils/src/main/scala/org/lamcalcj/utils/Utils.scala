@@ -112,8 +112,8 @@ object Utils {
 
   def substituteT(term: Term, variable: Identifier, result: Term): Trampoline[Term] =
     term match {
-      case Var(identifier) => if (identifier == variable) Done(Utils.cloneTerm(result)) else Done(Var(identifier))
-      case Abs(binding, term) => for {
+      case Var(identifier) => if (identifier == variable) Done(cloneTerm(result)) else Done(Var(identifier))
+      case Abs(binding, term) => if (binding == variable) Done(Abs(binding, term)) else for {
         currentTerm <- More(() => substituteT(term, variable, result))
       } yield Abs(binding, currentTerm)
       case App(term, argument) => for {

@@ -15,28 +15,36 @@ object EtaConverter {
     var step: Int = 0
     var aborted: Boolean = false
 
-    def convert(originalTerm: Term): Trampoline[Term] = if (aborted) Done(originalTerm) else
-      originalTerm match {
-        case Var(identifier) => Done(Var(identifier))
-        case Abs(binding, App(term, Var(identifier))) =>
-          if (binding == identifier && !Utils.hasFreeOccurrence(term, identifier))
-            if (maxStep.map(step >= _).getOrElse(false)) {
-              aborted = true
-              Done(originalTerm)
-            } else {
-              step += 1
-              More(() => convert(term))
-            }
-          else for {
+    def convert(originalTerm: Term): Trampoline[Term] =
+      if (aborted)
+        Done(originalTerm)
+      else
+        originalTerm match {
+          case Var(identifier) => Done(originalTerm)
+          case Abs(binding, App(term, Var(identifier))) =>
+            if (binding == identifier && !Utils.hasFreeOccurrence(term, identifier))
+              convertEtaRedex(binding, term)
+            else if (evaluationOnly) Done(originalTerm) else for {
+              currentTerm <- More(() => convert(term))
+            } yield Abs(binding, App(currentTerm, Var(identifier)))
+          case Abs(binding, term) => if (evaluationOnly) Done(originalTerm) else for {
             currentTerm <- More(() => convert(term))
-          } yield Abs(binding, App(if (evaluationOnly) term else currentTerm, Var(identifier)))
-        case Abs(binding, term) => for {
-          currentTerm <- More(() => convert(term))
-        } yield Abs(binding, if (evaluationOnly) term else currentTerm)
-        case App(term, argument) => for {
-          currentTerm <- More(() => convert(term))
-          currentArgument <- More(() => convert(argument))
-        } yield App(currentTerm, if (headOnly) argument else currentArgument)
+          } yield Abs(binding, currentTerm)
+          case App(term, argument) => for {
+            currentTerm <- More(() => convert(term))
+            resultTerm <- if (headOnly) Done(App(currentTerm, argument)) else for {
+              currentArgument <- More(() => convert(argument))
+            } yield App(currentTerm, currentArgument)
+          } yield resultTerm
+        }
+
+    def convertEtaRedex(binding: Identifier, term: Term): Trampoline[Term] =
+      if (maxStep.map(step >= _).getOrElse(false)) {
+        aborted = true
+        Done(Abs(binding, App(term, Var(binding))))
+      } else {
+        step += 1
+        More(() => convert(term))
       }
   }
 }

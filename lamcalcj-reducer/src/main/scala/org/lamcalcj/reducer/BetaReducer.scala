@@ -21,12 +21,10 @@ object BetaReducer {
         Done(originalTerm)
       else
         originalTerm match {
-          case Var(identifier) => Done(Var(identifier))
-          case Abs(binding, term) => if (!evaluationOnly)
-            for {
-              currentTerm <- reduce(term)
-            } yield Abs(binding, currentTerm)
-          else Done(Abs(binding, term))
+          case Var(identifier) => Done(originalTerm)
+          case Abs(binding, term) => if (evaluationOnly) Done(originalTerm) else for {
+            currentTerm <- More(() => reduce(term))
+          } yield Abs(binding, currentTerm)
           case App(term, argument) => More(() => reduceApp(term, argument, false))
         }
 
@@ -36,34 +34,36 @@ object BetaReducer {
       else
         originalTerm match {
           case Var(identifier) =>
-            for {
-              currentTerm <- reduce(originalArgument)
-            } yield App(Var(identifier), if (!headOnly) currentTerm else originalArgument)
-          case Abs(binding, term) => reduceBetaRedex(binding, term, originalArgument) match {
-            case Var(identifier) => Done(Var(identifier))
-            case Abs(binding, term) => if (hasOuterArugment) Done(Abs(binding, term)) else More(() => reduce(Abs(binding, term)))
-            case App(term, argument) => More(() => reduceApp(term, argument, hasOuterArugment))
-          }
+            if (headOnly) Done(App(originalTerm, originalArgument)) else for {
+              currentTerm <- More(() => reduce(originalArgument))
+            } yield App(originalTerm, currentTerm)
+          case Abs(binding, term) => for {
+            currentTerm <- More(() => reduceBetaRedex(binding, term, originalArgument))
+            resultTerm <- currentTerm match {
+              case Var(identifier) => Done(currentTerm)
+              case Abs(binding, term) => if (hasOuterArugment) Done(currentTerm) else More(() => reduce(currentTerm))
+              case App(term, argument) => More(() => reduceApp(term, argument, hasOuterArugment))
+            }
+          } yield resultTerm
           case App(term, argument) =>
             for {
               currentTerm <- More(() => reduceApp(term, argument, true))
               resultTerm <- currentTerm match {
-                case Abs(binding, term) => More(() => reduceApp(Abs(binding, term), originalArgument, hasOuterArugment))
-                case term => for {
-                  currentTerm <- reduce(originalArgument)
-                } yield App(term, if (!headOnly) currentTerm else originalArgument)
+                case Abs(binding, term) => More(() => reduceApp(currentTerm, originalArgument, hasOuterArugment))
+                case term => if (headOnly) Done(App(term, originalArgument)) else for {
+                  currentTerm <- More(() => reduce(originalArgument))
+                } yield App(term, currentTerm)
               }
             } yield resultTerm
         }
 
-    def reduceBetaRedex(binding: Identifier, term: Term, argument: Term): Term = {
+    def reduceBetaRedex(binding: Identifier, term: Term, argument: Term): Trampoline[Term] =
       if (maxStep.map(step >= _).getOrElse(false)) {
         aborted = true
-        App(Abs(binding, term), argument)
+        Done(App(Abs(binding, term), argument))
       } else {
         step += 1
-        Utils.substitute(term, binding, argument)
+        More(() => Utils.substituteT(term, binding, argument))
       }
-    }
   }
 }

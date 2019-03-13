@@ -27,6 +27,7 @@ object Utils {
           currentArgument <- More(() => alphaConversionT(argument, usedNames, mapping))
         } yield App(currentTerm, currentArgument)
     }
+
   def freeVariables(term: Term, bounds: Set[Identifier] = Set.empty): Set[Identifier] =
     freeVariablesT(term, bounds).runT
 
@@ -41,6 +42,22 @@ object Utils {
           termFV <- More(() => freeVariablesT(term, bounds))
           argumentFV <- More(() => freeVariablesT(argument, bounds))
         } yield termFV ++ argumentFV
+    }
+
+  def isClosedTerm(term: Term, bounds: Set[Identifier] = Set.empty): Boolean =
+    isClosedTermT(term, bounds).runT
+
+  def isClosedTermT(term: Term, bounds: Set[Identifier] = Set.empty): Trampoline[Boolean] =
+    term match {
+      case Var(identifier) =>
+        Done(bounds.contains(identifier))
+      case Abs(binding, term) =>
+        More(() => isClosedTermT(term, bounds + binding))
+      case App(term, argument) =>
+        for {
+          termClosed <- More(() => isClosedTermT(term, bounds))
+          argumentClosed <- More(() => isClosedTermT(argument, bounds))
+        } yield termClosed && argumentClosed
     }
 
   def hasFreeOccurrence(term: Term, id: Identifier): Boolean =

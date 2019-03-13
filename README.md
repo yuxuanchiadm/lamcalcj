@@ -1,4 +1,4 @@
-# Lamcalcj [![Build Status](https://travis-ci.com/yuxuanchiadm/lamcalcj.svg?branch=master)](https://travis-ci.com/yuxuanchiadm/lamcalcj)
+# Lamcalcj [![Build Status](https://travis-ci.com/yuxuanchiadm/lamcalcj.svg?branch=1.2.x)](https://travis-ci.com/yuxuanchiadm/lamcalcj)
 
 Lamcalcj is a collection of lambda calculus libraries including:
 
@@ -36,27 +36,27 @@ Add following to your `pom.xml` if using maven:
 	<dependency>
 		<groupId>org.lamcalcj</groupId>
 		<artifactId>lamcalcj-ast</artifactId>
-		<version>1.1.0</version>
+		<version>1.2.0</version>
 	</dependency>
 	<dependency>
 		<groupId>org.lamcalcj</groupId>
 		<artifactId>lamcalcj-compiler</artifactId>
-		<version>1.1.0</version>
+		<version>1.2.0</version>
 	</dependency>
 	<dependency>
 		<groupId>org.lamcalcj</groupId>
 		<artifactId>lamcalcj-pretty-print</artifactId>
-		<version>1.1.0</version>
+		<version>1.2.0</version>
 	</dependency>
 	<dependency>
 		<groupId>org.lamcalcj</groupId>
 		<artifactId>lamcalcj-reducer</artifactId>
-		<version>1.1.0</version>
+		<version>1.2.0</version>
 	</dependency>
 	<dependency>
 		<groupId>org.lamcalcj</groupId>
 		<artifactId>lamcalcj-utils</artifactId>
-		<version>1.1.0</version>
+		<version>1.2.0</version>
 	</dependency>
 </dependencies>
 ```
@@ -72,11 +72,11 @@ repositories {
 }
 
 dependencies {
-    compile 'org.lamcalcj:lamcalcj-ast:1.1.0'
-    compile 'org.lamcalcj:lamcalcj-compiler:1.1.0'
-    compile 'org.lamcalcj:lamcalcj-pretty-print:1.1.0'
-    compile 'org.lamcalcj:lamcalcj-reducer:1.1.0'
-    compile 'org.lamcalcj:lamcalcj-utils:1.1.0'
+    compile 'org.lamcalcj:lamcalcj-ast:1.2.0'
+    compile 'org.lamcalcj:lamcalcj-compiler:1.2.0'
+    compile 'org.lamcalcj:lamcalcj-pretty-print:1.2.0'
+    compile 'org.lamcalcj:lamcalcj-reducer:1.2.0'
+    compile 'org.lamcalcj:lamcalcj-utils:1.2.0'
 }
 ```
 

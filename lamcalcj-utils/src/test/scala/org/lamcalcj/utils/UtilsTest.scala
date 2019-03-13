@@ -44,6 +44,15 @@ class UtilsTest extends FunSpec {
       assert(Utils.freeVariables(Abs(id_x, Var(id_x))) == Set.empty)
     }
   }
+  describe("Closed term") {
+    it("Trivial terms") {
+      val id_x: Identifier = Identifier("x")
+      val id_y: Identifier = Identifier("y")
+      assert(!Utils.isClosedTerm(Var(id_x)))
+      assert(!Utils.isClosedTerm(App(Var(id_x), Var(id_y))))
+      assert(Utils.isClosedTerm(Abs(id_x, Var(id_x))))
+    }
+  }
   describe("Alpha equivalence") {
     it("Trivial terms") {
       val id_x: Identifier = Identifier("x")

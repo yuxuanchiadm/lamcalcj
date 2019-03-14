@@ -83,16 +83,27 @@ object Utils {
   def isAlphaEquivalentT(term: Term, other: Term, bounds: Map[Identifier, Identifier] = Map.empty): Trampoline[Boolean] =
     term match {
       case Var(identifier) =>
-        Done(other.isInstanceOf[Var] && other.asInstanceOf[Var].identifier == bounds.get(identifier).getOrElse(identifier))
+        other match {
+          case Var(otherIdentifier) => Done(otherIdentifier == bounds.get(identifier).getOrElse(identifier))
+          case term => Done(false)
+        }
       case Abs(binding, term) =>
-        for {
-          termAE <- More(() => isAlphaEquivalentT(term, other.asInstanceOf[Abs].term, bounds + (binding -> other.asInstanceOf[Abs].binding)))
-        } yield other.isInstanceOf[Abs] && termAE
+        other match {
+          case Abs(otherBinding, otherTerm) =>
+            for {
+              termAE <- More(() => isAlphaEquivalentT(term, otherTerm, bounds + (binding -> otherBinding)))
+            } yield termAE
+          case term => Done(false)
+        }
       case App(term, argument) =>
-        for {
-          termAE <- More(() => isAlphaEquivalentT(term, other.asInstanceOf[App].term, bounds))
-          argumentAE <- More(() => isAlphaEquivalentT(argument, other.asInstanceOf[App].argument, bounds))
-        } yield other.isInstanceOf[App] && termAE && argumentAE
+        other match {
+          case App(otherTerm, otherArgument) =>
+            for {
+              termAE <- More(() => isAlphaEquivalentT(term, otherTerm, bounds))
+              argumentAE <- More(() => isAlphaEquivalentT(argument, otherArgument, bounds))
+            } yield termAE && argumentAE
+          case term => Done(false)
+        }
     }
 
   def isTermValid(term: Term): Boolean =

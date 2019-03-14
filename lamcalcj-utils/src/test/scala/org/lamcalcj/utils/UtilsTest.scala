@@ -60,6 +60,9 @@ class UtilsTest extends FunSpec {
       assert(Utils.isAlphaEquivalent(Var(id_x), Var(id_x)))
       assert(Utils.isAlphaEquivalent(App(Var(id_x), Var(id_y)), App(Var(id_x), Var(id_y))))
       assert(Utils.isAlphaEquivalent(Abs(id_x, Var(id_x)), Abs(id_x, Var(id_x))))
+      assert(!Utils.isAlphaEquivalent(Abs(id_x, Var(id_x)), Var(id_x)))
+      assert(!Utils.isAlphaEquivalent(App(Var(id_x), Var(id_x)), Var(id_x)))
+      assert(!Utils.isAlphaEquivalent(Var(id_x), App(Var(id_x), Var(id_x))))
     }
     it("Free variables not alpha equivalet") {
       val id_x: Identifier = Identifier("x")

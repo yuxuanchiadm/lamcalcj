@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.lamcalcj</groupId>
 		<artifactId>lamcalcj-parent</artifactId>
-		<version>1.2.0</version>
+		<version>1.2.1-SNAPSHOT</version>
 	</parent>
 	<artifactId>lamcalcj-utils</artifactId>
 
@@ -22,7 +22,7 @@
 		<dependency>
 			<groupId>org.lamcalcj</groupId>
 			<artifactId>lamcalcj-ast</artifactId>
-			<version>1.2.0</version>
+			<version>1.2.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scalatest</groupId>

@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.lamcalcj</groupId>
 		<artifactId>lamcalcj-parent</artifactId>
-		<version>1.2.0-SNAPSHOT</version>
+		<version>1.2.0</version>
 	</parent>
 	<artifactId>lamcalcj-compiler</artifactId>
 
@@ -22,12 +22,12 @@
 		<dependency>
 			<groupId>org.lamcalcj</groupId>
 			<artifactId>lamcalcj-ast</artifactId>
-			<version>1.2.0-SNAPSHOT</version>
+			<version>1.2.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.lamcalcj</groupId>
 			<artifactId>lamcalcj-parser</artifactId>
-			<version>1.2.0-SNAPSHOT</version>
+			<version>1.2.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scalatest</groupId>

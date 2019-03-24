@@ -14,7 +14,7 @@ object Utils {
       case Abs(binding, term) =>
         if (usedNames.contains(binding.name)) {
           val unusedName: String = findUnusedName(binding.name, usedNames)
-          val identifier: Identifier = Identifier(unusedName)
+          val identifier: Identifier = binding.cloneIdentifier(unusedName)
           for {
             currentTerm <- More(() => alphaConversionT(term, usedNames + unusedName, mapping + (binding -> identifier)))
           } yield Abs(identifier, currentTerm)
@@ -123,7 +123,7 @@ object Utils {
       case Var(identifier) =>
         Done(mapping.get(identifier).map(Var).getOrElse(term))
       case Abs(binding, term) => {
-        val identifier: Identifier = Identifier(binding.name)
+        val identifier: Identifier = binding.cloneIdentifier()
         for {
           currentTerm <- More(() => cloneTermT(term, mapping + (binding -> identifier)))
         } yield Abs(identifier, currentTerm)

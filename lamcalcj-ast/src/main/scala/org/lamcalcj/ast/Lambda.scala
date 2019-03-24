@@ -6,6 +6,8 @@ object Lambda {
   }
   sealed class Identifier(val name: String) {
     override def toString: String = name + "@" + ##
+
+    def cloneIdentifier(newName: String = name): Identifier = Identifier(newName)
   }
 
   sealed abstract class Term(val size: Int, val depth: Int)

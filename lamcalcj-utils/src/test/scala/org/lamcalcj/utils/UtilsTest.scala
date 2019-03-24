@@ -91,6 +91,18 @@ class UtilsTest extends FunSpec {
       assert(!Utils.isTermValid(App(Abs(id_x, Var(id_x)), Var(id_x))))
     }
   }
+  describe("Clone term") {
+    it("Free variable should not be cloned") {
+      val id_x: Identifier = Identifier("x")
+      val id_y: Identifier = Identifier("y")
+      assert(Utils.cloneTerm(Var(id_x)).asInstanceOf[Var].identifier == id_x)
+      assert(Utils.cloneTerm(Abs(id_y, Var(id_x))).asInstanceOf[Abs].term.asInstanceOf[Var].identifier == id_x)
+    }
+    it("Bounded variable should be cloned") {
+      val id_x: Identifier = Identifier("x")
+      assert(Utils.cloneTerm(Abs(id_x, Var(id_x))).asInstanceOf[Abs].term.asInstanceOf[Var].identifier != id_x)
+    }
+  }
   describe("Term analysis") {
     it("Term size") {
       val id_x: Identifier = Identifier("x")

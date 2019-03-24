@@ -177,7 +177,7 @@ object Utils {
       case App(term, argument) => for {
         termSize <- More(() => analyzeTermDepthT(term))
         argumentSize <- More(() => analyzeTermDepthT(argument))
-      } yield 1 + Math.max(termSize, argumentSize)
+      } yield 1 + math.max(termSize, argumentSize)
     }
 
   private def findUnusedName(name: String, usedNames: Set[String]): String =

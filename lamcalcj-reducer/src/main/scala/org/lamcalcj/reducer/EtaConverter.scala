@@ -9,12 +9,14 @@ object EtaConverter {
   def etaConversion(term: Term, strategy: Strategy = Strategy()): Result = {
     val etaConverter: EtaConverter = new EtaConverter(strategy.maxStep, strategy.maxSize, strategy.maxDepth, strategy.headOnly, strategy.evaluationOnly)
     val result: Term = etaConverter(term).runT
-    return Result(etaConverter.abortReason, etaConverter.step, result)
+    return Result(etaConverter.step, etaConverter.sizePeak, etaConverter.depthPeak, etaConverter.abortReason, result)
   }
 
   private class EtaConverter(maxStep: Option[Int], maxSize: Option[Int], maxDepth: Option[Int], headOnly: Boolean, evaluationOnly: Boolean) {
     var step: Int = 0
     var size: Int = 0
+    var sizePeak: Int = 0
+    var depthPeak: Int = 0
     var abortReason: AbortReason = NormalForm
 
     def apply(originalTerm: Term): Trampoline[Term] =
@@ -29,6 +31,8 @@ object EtaConverter {
         Done(originalTerm)
       } else {
         size = originalTerm.size
+        sizePeak = originalTerm.size
+        depthPeak = originalTerm.depth
         More(() => convert(originalTerm, 0))
       }
 
@@ -64,18 +68,21 @@ object EtaConverter {
       } else for {
         resultTerm <- Done(term)
       } yield {
-        println(depth)
         val sizeDelta: Int = -3
         val depthDelta: Int = -2
-        if (maxSize.exists(_ < size + sizeDelta)) {
+        val resultSize = size + sizeDelta
+        val resultDepth = depth + depthDelta
+        if (maxSize.exists(_ < resultSize)) {
           abortReason = MaxSizeReached
           Abs(binding, App(term, Var(binding)))
-        } else if (maxDepth.exists(_ < depth + depthDelta)) {
+        } else if (maxDepth.exists(_ < resultDepth)) {
           abortReason = MaxDepthReached
           Abs(binding, App(term, Var(binding)))
         } else {
           step += 1
-          size += sizeDelta
+          size = resultSize
+          sizePeak = math.max(sizePeak, resultSize)
+          depthPeak = math.max(depthPeak, resultDepth)
           resultTerm
         }
       }

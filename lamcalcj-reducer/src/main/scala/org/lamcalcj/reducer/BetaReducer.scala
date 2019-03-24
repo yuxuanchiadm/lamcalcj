@@ -10,12 +10,14 @@ object BetaReducer {
   def betaReduction(term: Term, strategy: Strategy = Strategy()): Result = {
     val betaReducer: BetaReducer = new BetaReducer(strategy.maxStep, strategy.maxSize, strategy.maxDepth, strategy.headOnly, strategy.evaluationOnly)
     val result: Term = betaReducer(term).runT
-    return Result(betaReducer.abortReason, betaReducer.step, result)
+    return Result(betaReducer.step, betaReducer.sizePeak, betaReducer.depthPeak, betaReducer.abortReason, result)
   }
 
   private class BetaReducer(maxStep: Option[Int], maxSize: Option[Int], maxDepth: Option[Int], headOnly: Boolean, evaluationOnly: Boolean) {
     var step: Int = 0
     var size: Int = 0
+    var sizePeak: Int = 0
+    var depthPeak: Int = 0
     var abortReason: AbortReason = NormalForm
 
     def apply(originalTerm: Term): Trampoline[Term] =
@@ -30,6 +32,8 @@ object BetaReducer {
         Done(originalTerm)
       } else {
         size = originalTerm.size
+        sizePeak = originalTerm.size
+        depthPeak = originalTerm.depth
         More(() => reduce(originalTerm, 0))
       }
 
@@ -81,16 +85,20 @@ object BetaReducer {
         resultTerm <- More(() => Utils.substituteT(term, binding, argument))
       } yield {
         val sizeDelta: Int = (1 + (1 + term.size) + argument.size) - resultTerm.size
-        val depthDelta: Int = (1 + Math.max(1 + term.depth, argument.depth)) - resultTerm.depth
-        if (maxSize.exists(_ < size + sizeDelta)) {
+        val depthDelta: Int = (1 + math.max(1 + term.depth, argument.depth)) - resultTerm.depth
+        val resultSize = size + sizeDelta
+        val resultDepth = depth + depthDelta
+        if (maxSize.exists(_ < resultSize)) {
           abortReason = MaxSizeReached
           App(Abs(binding, term), argument)
-        } else if (maxDepth.exists(_ < depth + depthDelta)) {
+        } else if (maxDepth.exists(_ < resultDepth)) {
           abortReason = MaxDepthReached
           App(Abs(binding, term), argument)
         } else {
           step += 1
-          size += sizeDelta
+          size = resultSize
+          sizePeak = math.max(sizePeak, resultSize)
+          depthPeak = math.max(depthPeak, resultDepth)
           resultTerm
         }
       }

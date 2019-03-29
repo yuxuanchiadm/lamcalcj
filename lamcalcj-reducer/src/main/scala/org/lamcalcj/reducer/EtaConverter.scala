@@ -42,17 +42,20 @@ object EtaConverter {
       else
         originalTerm match {
           case Var(identifier) => Done(originalTerm)
-          case Abs(binding, App(term, Var(identifier))) =>
-            if (binding == identifier && !Utils.hasFreeOccurrence(term, identifier)) for {
-              currentTerm <- More(() => convertEtaRedex(binding, term, depth))
-              resultTerm <- More(() => convert(currentTerm, depth))
-            } yield resultTerm
-            else if (evaluationOnly) Done(originalTerm) else for {
-              currentTerm <- More(() => convert(term, depth + 2))
-            } yield Abs(binding, App(currentTerm, Var(identifier)))
+          case Abs(binding, App(term, Var(identifier))) if (binding == identifier && !Utils.hasFreeOccurrence(term, identifier)) => for {
+            currentTerm <- More(() => convertEtaRedex(binding, term, depth))
+            resultTerm <- More(() => convert(currentTerm, depth))
+          } yield resultTerm
           case Abs(binding, term) => if (evaluationOnly) Done(originalTerm) else for {
             currentTerm <- More(() => convert(term, depth + 1))
-          } yield Abs(binding, currentTerm)
+            resultTerm <- currentTerm match {
+              case App(term, Var(identifier)) if (binding == identifier && !Utils.hasFreeOccurrence(term, identifier)) => for {
+                currentTerm <- More(() => convertEtaRedex(binding, term, depth))
+                resultTerm <- More(() => convert(currentTerm, depth))
+              } yield resultTerm
+              case term => Done(Abs(binding, term))
+            }
+          } yield resultTerm
           case App(term, argument) => for {
             currentTerm <- More(() => convert(term, depth + 1))
             resultTerm <- if (headOnly) Done(App(currentTerm, argument)) else for {

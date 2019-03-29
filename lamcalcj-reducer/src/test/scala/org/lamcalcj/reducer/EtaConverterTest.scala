@@ -18,5 +18,16 @@ class EtaConverterTest extends FunSpec {
     it("Should detect free occurrence of variable") {
       assertResult("λx.x x")(PrettyPrint.printLambda(EtaConverter.etaConversion(Compiler.runLambdaParser(Text("λx.x x")).right.get._2).term))
     }
+    it("Should convert nested eta redex") {
+      assert(Utils.isAlphaEquivalent(
+        Compiler.runLambdaParser(Text("λx.x")).right.get._2,
+        EtaConverter.etaConversion(Compiler.runLambdaParser(Text("λx.λy.x y")).right.get._2).term))
+      assert(Utils.isAlphaEquivalent(
+        Compiler.runLambdaParser(Text("λx.x")).right.get._2,
+        EtaConverter.etaConversion(Compiler.runLambdaParser(Text("λx.λy.λz.x y z")).right.get._2).term))
+      assert(Utils.isAlphaEquivalent(
+        Compiler.runLambdaParser(Text("λx.x")).right.get._2,
+        EtaConverter.etaConversion(Compiler.runLambdaParser(Text("λx.λy.λz.(λa.x a) (λb.y b) (λc.z c)")).right.get._2).term))
+    }
   }
 }

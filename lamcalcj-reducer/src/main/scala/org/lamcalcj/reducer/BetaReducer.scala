@@ -13,6 +13,13 @@ object BetaReducer {
     return Result(betaReducer.step, betaReducer.sizePeak, betaReducer.depthPeak, betaReducer.abortReason, result)
   }
 
+  @throws[InterruptedException]
+  def interruptibleBetaReduction(term: Term, strategy: Strategy = Strategy()): Result = {
+    val betaReducer: BetaReducer = new BetaReducer(strategy.maxStep, strategy.maxSize, strategy.maxDepth, strategy.headOnly, strategy.evaluationOnly)
+    val result: Term = betaReducer(term).interruptibleRunT
+    return Result(betaReducer.step, betaReducer.sizePeak, betaReducer.depthPeak, betaReducer.abortReason, result)
+  }
+
   private class BetaReducer(maxStep: Option[Int], maxSize: Option[Int], maxDepth: Option[Int], headOnly: Boolean, evaluationOnly: Boolean) {
     var step: Int = 0
     var size: Int = 0

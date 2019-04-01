@@ -12,6 +12,13 @@ object EtaConverter {
     return Result(etaConverter.step, etaConverter.sizePeak, etaConverter.depthPeak, etaConverter.abortReason, result)
   }
 
+  @throws[InterruptedException]
+  def interruptibleEtaConversion(term: Term, strategy: Strategy = Strategy()): Result = {
+    val etaConverter: EtaConverter = new EtaConverter(strategy.maxStep, strategy.maxSize, strategy.maxDepth, strategy.headOnly, strategy.evaluationOnly)
+    val result: Term = etaConverter(term).interruptibleRunT
+    return Result(etaConverter.step, etaConverter.sizePeak, etaConverter.depthPeak, etaConverter.abortReason, result)
+  }
+
   private class EtaConverter(maxStep: Option[Int], maxSize: Option[Int], maxDepth: Option[Int], headOnly: Boolean, evaluationOnly: Boolean) {
     var step: Int = 0
     var size: Int = 0

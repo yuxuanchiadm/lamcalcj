@@ -91,8 +91,8 @@ object BetaReducer {
       } else for {
         resultTerm <- More(() => Utils.substituteT(term, binding, argument))
       } yield {
-        val sizeDelta: Int = (1 + (1 + term.size) + argument.size) - resultTerm.size
-        val depthDelta: Int = (1 + math.max(1 + term.depth, argument.depth)) - resultTerm.depth
+        val sizeDelta: Int = resultTerm.size - (1 + (1 + term.size) + argument.size)
+        val depthDelta: Int = resultTerm.depth - (1 + math.max(1 + term.depth, argument.depth))
         val resultSize = size + sizeDelta
         val resultDepth = depth + depthDelta
         if (maxSize.exists(_ < resultSize)) {

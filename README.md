@@ -36,27 +36,27 @@ Add following to your `pom.xml` if using maven:
 	<dependency>
 		<groupId>org.lamcalcj</groupId>
 		<artifactId>lamcalcj-ast</artifactId>
-		<version>1.3.3</version>
+		<version>1.3.4</version>
 	</dependency>
 	<dependency>
 		<groupId>org.lamcalcj</groupId>
 		<artifactId>lamcalcj-compiler</artifactId>
-		<version>1.3.3</version>
+		<version>1.3.4</version>
 	</dependency>
 	<dependency>
 		<groupId>org.lamcalcj</groupId>
 		<artifactId>lamcalcj-pretty-print</artifactId>
-		<version>1.3.3</version>
+		<version>1.3.4</version>
 	</dependency>
 	<dependency>
 		<groupId>org.lamcalcj</groupId>
 		<artifactId>lamcalcj-reducer</artifactId>
-		<version>1.3.3</version>
+		<version>1.3.4</version>
 	</dependency>
 	<dependency>
 		<groupId>org.lamcalcj</groupId>
 		<artifactId>lamcalcj-utils</artifactId>
-		<version>1.3.3</version>
+		<version>1.3.4</version>
 	</dependency>
 </dependencies>
 ```
@@ -72,11 +72,11 @@ repositories {
 }
 
 dependencies {
-    compile 'org.lamcalcj:lamcalcj-ast:1.3.3'
-    compile 'org.lamcalcj:lamcalcj-compiler:1.3.3'
-    compile 'org.lamcalcj:lamcalcj-pretty-print:1.3.3'
-    compile 'org.lamcalcj:lamcalcj-reducer:1.3.3'
-    compile 'org.lamcalcj:lamcalcj-utils:1.3.3'
+    compile 'org.lamcalcj:lamcalcj-ast:1.3.4'
+    compile 'org.lamcalcj:lamcalcj-compiler:1.3.4'
+    compile 'org.lamcalcj:lamcalcj-pretty-print:1.3.4'
+    compile 'org.lamcalcj:lamcalcj-reducer:1.3.4'
+    compile 'org.lamcalcj:lamcalcj-utils:1.3.4'
 }
 ```
 

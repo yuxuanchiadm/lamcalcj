@@ -1,4 +1,4 @@
-# Lamcalcj [![Build Status](https://travis-ci.com/yuxuanchiadm/lamcalcj.svg?branch=1.4.x)](https://travis-ci.com/yuxuanchiadm/lamcalcj)
+# Lamcalcj [![Build Status](https://travis-ci.com/yuxuanchiadm/lamcalcj.svg?branch=1.5.x)](https://travis-ci.com/yuxuanchiadm/lamcalcj)
 
 Lamcalcj is a collection of lambda calculus libraries including:
 
@@ -36,27 +36,27 @@ Add following to your `pom.xml` if using maven:
 	<dependency>
 		<groupId>org.lamcalcj</groupId>
 		<artifactId>lamcalcj-ast_2.12</artifactId>
-		<version>1.4.0</version>
+		<version>1.5.0</version>
 	</dependency>
 	<dependency>
 		<groupId>org.lamcalcj</groupId>
 		<artifactId>lamcalcj-compiler_2.12</artifactId>
-		<version>1.4.0</version>
+		<version>1.5.0</version>
 	</dependency>
 	<dependency>
 		<groupId>org.lamcalcj</groupId>
 		<artifactId>lamcalcj-pretty-print_2.12</artifactId>
-		<version>1.4.0</version>
+		<version>1.5.0</version>
 	</dependency>
 	<dependency>
 		<groupId>org.lamcalcj</groupId>
 		<artifactId>lamcalcj-reducer_2.12</artifactId>
-		<version>1.4.0</version>
+		<version>1.5.0</version>
 	</dependency>
 	<dependency>
 		<groupId>org.lamcalcj</groupId>
 		<artifactId>lamcalcj-utils_2.12</artifactId>
-		<version>1.4.0</version>
+		<version>1.5.0</version>
 	</dependency>
 </dependencies>
 ```
@@ -72,22 +72,22 @@ repositories {
 }
 
 dependencies {
-    compile 'org.lamcalcj:lamcalcj-ast_2.12:1.4.0'
-    compile 'org.lamcalcj:lamcalcj-compiler_2.12:1.4.0'
-    compile 'org.lamcalcj:lamcalcj-pretty-print_2.12:1.4.0'
-    compile 'org.lamcalcj:lamcalcj-reducer_2.12:1.4.0'
-    compile 'org.lamcalcj:lamcalcj-utils_2.12:1.4.0'
+    compile 'org.lamcalcj:lamcalcj-ast_2.12:1.5.0'
+    compile 'org.lamcalcj:lamcalcj-compiler_2.12:1.5.0'
+    compile 'org.lamcalcj:lamcalcj-pretty-print_2.12:1.5.0'
+    compile 'org.lamcalcj:lamcalcj-reducer_2.12:1.5.0'
+    compile 'org.lamcalcj:lamcalcj-utils_2.12:1.5.0'
 }
 ```
 
 Add following to your `build.sbt` if using sbt:
 
 ```
-libraryDependencies += "org.lamcalcj" %% "lamcalcj-ast" % "1.4.0"
-libraryDependencies += "org.lamcalcj" %% "lamcalcj-compiler" % "1.4.0"
-libraryDependencies += "org.lamcalcj" %% "lamcalcj-pretty-print" % "1.4.0"
-libraryDependencies += "org.lamcalcj" %% "lamcalcj-reducer" % "1.4.0"
-libraryDependencies += "org.lamcalcj" %% "lamcalcj-utils" % "1.4.0"
+libraryDependencies += "org.lamcalcj" %% "lamcalcj-ast" % "1.5.0"
+libraryDependencies += "org.lamcalcj" %% "lamcalcj-compiler" % "1.5.0"
+libraryDependencies += "org.lamcalcj" %% "lamcalcj-pretty-print" % "1.5.0"
+libraryDependencies += "org.lamcalcj" %% "lamcalcj-reducer" % "1.5.0"
+libraryDependencies += "org.lamcalcj" %% "lamcalcj-utils" % "1.5.0"
 ```
 
 # Examples

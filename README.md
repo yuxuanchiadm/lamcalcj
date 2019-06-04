@@ -35,27 +35,27 @@ Add following to your `pom.xml` if using maven:
 <dependencies>
 	<dependency>
 		<groupId>org.lamcalcj</groupId>
-		<artifactId>lamcalcj-ast</artifactId>
+		<artifactId>lamcalcj-ast_2.12</artifactId>
 		<version>1.4.0</version>
 	</dependency>
 	<dependency>
 		<groupId>org.lamcalcj</groupId>
-		<artifactId>lamcalcj-compiler</artifactId>
+		<artifactId>lamcalcj-compiler_2.12</artifactId>
 		<version>1.4.0</version>
 	</dependency>
 	<dependency>
 		<groupId>org.lamcalcj</groupId>
-		<artifactId>lamcalcj-pretty-print</artifactId>
+		<artifactId>lamcalcj-pretty-print_2.12</artifactId>
 		<version>1.4.0</version>
 	</dependency>
 	<dependency>
 		<groupId>org.lamcalcj</groupId>
-		<artifactId>lamcalcj-reducer</artifactId>
+		<artifactId>lamcalcj-reducer_2.12</artifactId>
 		<version>1.4.0</version>
 	</dependency>
 	<dependency>
 		<groupId>org.lamcalcj</groupId>
-		<artifactId>lamcalcj-utils</artifactId>
+		<artifactId>lamcalcj-utils_2.12</artifactId>
 		<version>1.4.0</version>
 	</dependency>
 </dependencies>
@@ -72,12 +72,22 @@ repositories {
 }
 
 dependencies {
-    compile 'org.lamcalcj:lamcalcj-ast:1.4.0'
-    compile 'org.lamcalcj:lamcalcj-compiler:1.4.0'
-    compile 'org.lamcalcj:lamcalcj-pretty-print:1.4.0'
-    compile 'org.lamcalcj:lamcalcj-reducer:1.4.0'
-    compile 'org.lamcalcj:lamcalcj-utils:1.4.0'
+    compile 'org.lamcalcj:lamcalcj-ast_2.12:1.4.0'
+    compile 'org.lamcalcj:lamcalcj-compiler_2.12:1.4.0'
+    compile 'org.lamcalcj:lamcalcj-pretty-print_2.12:1.4.0'
+    compile 'org.lamcalcj:lamcalcj-reducer_2.12:1.4.0'
+    compile 'org.lamcalcj:lamcalcj-utils_2.12:1.4.0'
 }
+```
+
+Add following to your `build.sbt` if using sbt:
+
+```
+libraryDependencies += "org.lamcalcj" %% "lamcalcj-ast" % "1.4.0"
+libraryDependencies += "org.lamcalcj" %% "lamcalcj-compiler" % "1.4.0"
+libraryDependencies += "org.lamcalcj" %% "lamcalcj-pretty-print" % "1.4.0"
+libraryDependencies += "org.lamcalcj" %% "lamcalcj-reducer" % "1.4.0"
+libraryDependencies += "org.lamcalcj" %% "lamcalcj-utils" % "1.4.0"
 ```
 
 # Examples

@@ -1,7 +1,7 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 ThisBuild / organization      := "org.lamcalcj"
-ThisBuild / version           := "1.4.0"
+ThisBuild / version           := "1.4.1-SNAPSHOT"
 ThisBuild / scalaVersion      := "2.12.8"
 ThisBuild / organizationName  := "LamcalcJ"
 ThisBuild / startYear         := Option(2019)

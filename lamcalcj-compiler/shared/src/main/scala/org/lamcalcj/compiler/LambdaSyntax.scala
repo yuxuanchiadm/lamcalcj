@@ -1,5 +1,6 @@
 package org.lamcalcj.compiler
 
+import org.lamcalcj.ast.Lambda._
 import org.lamcalcj.parser._
 import org.lamcalcj.parser.Combinator._
 import org.lamcalcj.parser.Parser._
@@ -9,7 +10,9 @@ import org.lamcalcj.compiler.LambdaSyntax._
 trait LambdaSyntax {
   def indentationP[U]: Parser[Text, U, Unit]
 
-  def identifierP[U]: Parser[Text, U, String]
+  def nameP[U]: Parser[Text, U, String]
+
+  def identifierP[U](p: Parser[Text, U, String], f: String => Parser[Text, U, Identifier]): Parser[Text, U, Identifier]
 
   def variableP[U, A](p: Parser[Text, U, A]): Parser[Text, U, A]
 
@@ -43,13 +46,15 @@ object LambdaSyntax {
   object DefaultLambdaSyntax extends LambdaSyntax {
     def indentationP[U]: Parser[Text, U, Unit] = skipSome(charSatisfy(Character.isWhitespace))
 
-    def identifierP[U]: Parser[Text, U, String] = stringSatisfy(c =>
+    def nameP[U]: Parser[Text, U, String] = stringSatisfy(c =>
       c != 'λ' && (
         c.isLetterOrDigit ||
         Character.getType(c) == Character.MATH_SYMBOL ||
         Character.getType(c) == Character.OTHER_SYMBOL ||
-        c == '$' ||
-        c == '_')).advancing() <#> MessageExpected("<Identifier>")
+          c == '$' ||
+          c == '_')).advancing() <#> MessageExpected("<Name>")
+
+    def identifierP[U](p: Parser[Text, U, String], f: String => Parser[Text, U, Identifier]): Parser[Text, U, Identifier] = p >>= f
 
     def variableP[U, A](p: Parser[Text, U, A]): Parser[Text, U, A] = p
 

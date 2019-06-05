@@ -1,10 +1,10 @@
 package org.lamcalcj.compiler
 
+import org.lamcalcj.ast.Lambda._
 import org.lamcalcj.parser._
 import org.lamcalcj.parser.Combinator._
 import org.lamcalcj.parser.Parser._
 import org.lamcalcj.parser.Text._
-import org.lamcalcj.ast.Lambda._
 
 object Compiler {
   def runLambdaParser(
@@ -22,25 +22,23 @@ object Compiler {
     def lambdaSeparatorP[A](innerP: Parser[Text, Map[String, Identifier], A]): Parser[Text, Map[String, Identifier], A] =
       between(lambdaSyntax.indentationP, lambdaSyntax.indentationP, innerP)
 
-    def lambdaIdentifierP(identifierLookup: String => Parser[Text, Map[String, Identifier], Identifier]): Parser[Text, Map[String, Identifier], Identifier] =
+    def lambdaIdentifierP(boundVars: Map[String, Identifier]): Parser[Text, Map[String, Identifier], Identifier] =
       for {
-        name <- lambdaSyntax.identifierP
-        identifier <- identifierLookup(name)
+        identifier <- lambdaSyntax.identifierP[Map[String, Identifier]](lambdaSyntax.nameP, name => for {
+          freeVars <- getState
+          identifier <- boundVars.get(name)
+            .orElse(freeVars.get(name))
+            .map(unit[Text, Map[String, Identifier], Identifier])
+            .getOrElse(for {
+              identifier <- unit[Text, Map[String, Identifier], Identifier](Identifier(name))
+              _ <- putState(freeVars + (name -> identifier))
+            } yield identifier)
+        } yield identifier)
       } yield identifier
 
     def lambdaVariableP(boundVars: Map[String, Identifier]): Parser[Text, Map[String, Identifier], Term] =
       lambdaSyntax.variableP(lambdaSeparatorP(for {
-        identifier <- lambdaIdentifierP(name => boundVars.get(name)
-          .map(unit[Text, Map[String, Identifier], Identifier])
-          .getOrElse(for {
-            freeVars <- getState
-            identifier <- freeVars.get(name)
-              .map(unit[Text, Map[String, Identifier], Identifier])
-              .getOrElse(for {
-                identifier <- unit[Text, Map[String, Identifier], Identifier](Identifier(name))
-                _ <- putState(freeVars + (name -> identifier))
-              } yield identifier)
-          } yield identifier))
+        identifier <- lambdaIdentifierP(boundVars)
       } yield Var(identifier)))
 
     def lambdaAbstractionP(boundVars: Map[String, Identifier]): Parser[Text, Map[String, Identifier], Term] =
@@ -54,7 +52,9 @@ object Compiler {
       } yield term))
 
     def lambdaBindingP(boundVars: Map[String, Identifier]): Parser[Text, Map[String, Identifier], List[Identifier]] =
-      lambdaSyntax.bindingP(lambdaSeparatorP(manySepBy(lambdaSeparatorP(lambdaIdentifierP(name => unit(Identifier(name)))), lambdaSyntax.bindingInfixP)))
+      lambdaSyntax.bindingP(lambdaSeparatorP(manySepBy(lambdaSeparatorP(for {
+        name <- lambdaSyntax.nameP
+      } yield Identifier(name)), lambdaSyntax.bindingInfixP)))
 
     def lambdaApplicationP(boundVars: Map[String, Identifier]): Parser[Text, Map[String, Identifier], Term] =
       lambdaSyntax.applicationP(lambdaSeparatorP(for {

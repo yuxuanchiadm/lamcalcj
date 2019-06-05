@@ -16,6 +16,8 @@ sealed case class Parser[S, U, A](unParser: (S, Location, U) => Trampoline[(Bool
       case (b, ResultError(e)) => Done((b, ResultError(e)))
     }))
 
+  final def >>=[B](f: A => Parser[S, U, B]): Parser[S, U, B] = flatMap(f)
+
   final def >>&[B](p: Parser[S, U, B]): Parser[S, U, B] = flatMap(_ => p)
 
   final def &>>[B](p: Parser[S, U, B]): Parser[S, U, A] = flatMap(a => p.map(_ => a))
